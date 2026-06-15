@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur de trace — Structures conditionnelles</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#222;font-size:15px;padding:16px}
+  h1{font-size:17px;font-weight:600;color:#1F497D;margin-bottom:4px}
+  .subtitle{font-size:12px;color:#666;margin-bottom:16px}
+  .card{background:#fff;border:1px solid #dde3ec;border-radius:10px;padding:16px;margin-bottom:14px}
+  .section-label{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+
+  .selector{display:flex;gap:0;border:1px solid #c5cfe0;border-radius:8px;overflow:hidden;margin-bottom:14px}
+  .sel-btn{flex:1;padding:7px 6px;font-size:12px;border:none;background:#fff;color:#555;cursor:pointer;text-align:center;transition:background .15s}
+  .sel-btn:not(:last-child){border-right:1px solid #c5cfe0}
+  .sel-btn.active{background:#1F497D;color:#fff;font-weight:600}
+  .sel-btn:hover:not(.active){background:#eef2f8}
+
+  .val-input{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .val-input label{font-size:13px;color:#555;min-width:100px;font-family:monospace}
+  .val-input input{width:90px;font-size:14px;padding:5px 8px;border:1px solid #c5cfe0;border-radius:6px;background:#f8fafc;color:#222}
+
+  .algo-block{background:#f0f4f9;border:1px solid #c5cfe0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:1.9}
+  .algo-line{display:block;padding:2px 6px;border-radius:4px;transition:background .15s;color:#333;white-space:pre}
+  .algo-line.active{background:#1F497D;color:#fff;border-radius:4px}
+  .algo-line.active .kw{color:#b8d4f0}
+  .algo-line.done{background:#d6efe0;color:#1E6B3C}
+  .kw{color:#1F497D;font-weight:600}
+
+  .controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+  .btn{padding:7px 18px;font-size:13px;border:1px solid #c5cfe0;border-radius:7px;background:#fff;color:#333;cursor:pointer;font-weight:500;transition:all .15s}
+  .btn:hover{background:#eef2f8;border-color:#a0b0cc}
+  .btn:active{transform:scale(0.98)}
+  .btn.primary{background:#1F497D;color:#fff;border-color:#1F497D}
+  .btn.primary:hover{background:#163864}
+  .step-ctr{font-size:12px;color:#888;margin-left:4px}
+
+  .msg-box{padding:9px 13px;border-radius:7px;font-size:13px;margin-bottom:12px;font-family:monospace;border-left:3px solid}
+  .msg-box.info{background:#D6E4F0;color:#1F497D;border-color:#1F497D}
+  .msg-box.success{background:#d6efe0;color:#1E6B3C;border-color:#1E6B3C}
+  .msg-box.warn{background:#FFF3CD;color:#856404;border-color:#F0AD00}
+
+  .trace-wrap{overflow-x:auto;margin-bottom:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#1F497D;color:#fff;padding:7px 10px;font-weight:500;text-align:left;white-space:nowrap}
+  td{padding:5px 10px;border-bottom:1px solid #eaeff6;font-family:monospace;color:#333;white-space:nowrap}
+  tr.new-row td{background:#d6efe0;color:#1E6B3C}
+  tr:hover td{background:#f0f4f9}
+
+  .output-box{background:#f0f4f9;border:1px solid #c5cfe0;border-radius:7px;padding:10px 14px;font-family:monospace;font-size:13px;min-height:38px;color:#333}
+  .output-box.has-val{background:#d6efe0;color:#1E6B3C;border-color:#88c9a8}
+
+  .badge-fin{display:inline-block;background:#1E6B3C;color:#fff;font-size:11px;padding:2px 10px;border-radius:20px;margin-left:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<h1>Simulateur de trace — Structures conditionnelles</h1>
+<p class="subtitle">Module RES1-03 · Bases de la programmation · BUT Science de Données S1</p>
+
+<div class="section-label">Choisir un exemple</div>
+<div class="selector" id="exsel">
+  <button class="sel-btn active" onclick="selectEx(0)">Si simple</button>
+  <button class="sel-btn" onclick="selectEx(1)">Si / sinon</button>
+  <button class="sel-btn" onclick="selectEx(2)">Si imbriqués</button>
+  <button class="sel-btn" onclick="selectEx(3)">Selon</button>
+</div>
+
+<div class="card">
+  <div class="section-label">Valeur d'entrée</div>
+  <div id="inputs-area"></div>
+</div>
+
+<div class="card">
+  <div class="section-label">Algorithme — ligne surlignée = instruction en cours</div>
+  <div class="algo-block" id="algo-display"></div>
+  <div class="controls">
+    <button class="btn primary" onclick="stepFwd()">▶ Étape suivante</button>
+    <button class="btn" onclick="reset()">↺ Réinitialiser</button>
+    <button class="btn" onclick="runAll()">⏩ Tout exécuter</button>
+    <span class="step-ctr" id="step-ctr">Étape 0 / ?</span>
+  </div>
+  <div id="msg-area"></div>
+</div>
+
+<div class="card">
+  <div class="section-label">Tableau de trace</div>
+  <div class="trace-wrap">
+    <table>
+      <thead id="trace-head"></thead>
+      <tbody id="trace-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-label">Affichages produits par l'algorithme</div>
+  <div class="output-box" id="output-area">— (aucun affichage pour l'instant)</div>
+</div>
+
+<script>
+const EXAMPLES = [
+  {
+    name: "Si simple",
+    vars: [{id:"note", label:"note ←", type:"float", default:14}],
+    cols: ["Étape","note","condition\nnote >= 10","action"],
+    steps: function(vals) {
+      const note = vals.note;
+      const cond = note >= 10;
+      return [
+        {line:0, col:{note, cond:"—", action:"—"}, msg:{type:"info", text:`Déclaration de la variable note. On lui affecte la valeur ${note}.`}},
+        {line:1, col:{note, cond: cond?"vrai":"faux", action:"—"}, msg:{type: cond?"success":"warn", text:`Évaluation de la condition : ${note} >= 10 → ${cond?"VRAI ✓ — on entre dans le si":"FAUX ✗ — on saute le bloc alors"}`}},
+        ...(cond
+          ? [{line:2, col:{note, cond:"vrai", action:'Afficher("Admis")'}, msg:{type:"success", text:'Branche ALORS exécutée → Afficher("Admis")'}, out:"Admis"},
+             {line:3, col:{note, cond:"—", action:"—"}, msg:{type:"info", text:"Fin du si — on sort de la structure."}}]
+          : [{line:3, col:{note, cond:"faux", action:"(rien — pas de sinon)"}, msg:{type:"warn", text:"Pas de branche SINON → on sort directement du si sans rien faire."}}]),
+        {line:4, col:{note, cond:"—", action:"—"}, msg:{type:"info", text:"Fin de l'algorithme."}}
+      ];
+    },
+    lines: [
+      {t:"Variables note : réel", i:0},
+      {t:"<span class='kw'>si</span> note >= 10 <span class='kw'>alors</span>", i:0},
+      {t:"   Afficher(\"Admis\")", i:1},
+      {t:"<span class='kw'>fsi</span>", i:0},
+      {t:"<span class='kw'>Fin</span>", i:0}
+    ]
+  },
+  {
+    name: "Si / sinon",
+    vars: [{id:"note", label:"note ←", type:"float", default:7}],
+    cols: ["Étape","note","condition\nnote >= 10","branche","affichage"],
+    steps: function(vals) {
+      const note = vals.note;
+      const cond = note >= 10;
+      const rows = [
+        {line:0, col:{note, cond:"—", branche:"—", aff:"—"}, msg:{type:"info", text:`Déclaration : note ← ${note}`}},
+        {line:1, col:{note, cond: cond?"vrai":"faux", branche:"—", aff:"—"}, msg:{type:cond?"success":"warn", text:`Test : ${note} >= 10 → ${cond?"vrai — branche ALORS":"faux — branche SINON"}`}}
+      ];
+      if(cond) {
+        rows.push({line:2, col:{note, cond:"vrai", branche:"ALORS", aff:'"Admis"'}, msg:{type:"success", text:'Branche ALORS → Afficher("Admis")'}, out:"Admis"});
+        rows.push({line:4, col:{note, cond:"—", branche:"—", aff:"—"}, msg:{type:"info", text:"Saut par-dessus la branche SINON."}});
+      } else {
+        rows.push({line:3, col:{note, cond:"faux", branche:"SINON", aff:'"Insuffisant"'}, msg:{type:"warn", text:'Branche SINON → Afficher("Insuffisant")'}, out:"Insuffisant"});
+      }
+      rows.push({line:5, col:{note, cond:"—", branche:"—", aff:"—"}, msg:{type:"info", text:"Fin de l'algorithme."}});
+      return rows;
+    },
+    lines: [
+      {t:"Variables note : réel", i:0},
+      {t:"<span class='kw'>si</span> note >= 10 <span class='kw'>alors</span>", i:0},
+      {t:"   Afficher(\"Admis\")", i:1},
+      {t:"<span class='kw'>sinon</span>", i:0},
+      {t:"   Afficher(\"Insuffisant\")", i:1},
+      {t:"<span class='kw'>fsi</span>", i:0},
+      {t:"<span class='kw'>Fin</span>", i:0}
+    ]
+  },
+  {
+    name: "Si imbriqués (mentions)",
+    vars: [{id:"note", label:"note ←", type:"float", default:13.5}],
+    cols: ["Étape","note","test 1\n(note >= 12)","test 2\n(note >= 10)","mention affichée"],
+    steps: function(vals) {
+      const note = vals.note;
+      const t1 = note >= 12, t2 = note >= 10;
+      const rows = [
+        {line:0, col:{note, t1:"—", t2:"—", mention:"—"}, msg:{type:"info", text:`Déclaration : note ← ${note}`}},
+        {line:1, col:{note, t1:t1?"vrai":"faux", t2:"—", mention:"—"}, msg:{type:t1?"success":"warn", text:`Test 1 : ${note} >= 12 → ${t1?"vrai — branche ALORS externe":"faux — on entre dans le SINON"}`}}
+      ];
+      if(t1) {
+        rows.push({line:2, col:{note, t1:"vrai", t2:"(non testé)", mention:'"Bien"'}, msg:{type:"success", text:'note >= 12 : branche ALORS → Afficher("Bien")'}, out:"Bien"});
+        rows.push({line:7, col:{note, t1:"—", t2:"—", mention:"—"}, msg:{type:"info", text:"Sortie du si externe — tests imbriqués ignorés."}});
+      } else {
+        rows.push({line:3, col:{note, t1:"faux", t2:"—", mention:"—"}, msg:{type:"info", text:"Branche SINON externe → on évalue le si interne."}});
+        rows.push({line:4, col:{note, t1:"faux", t2:t2?"vrai":"faux", mention:"—"}, msg:{type:t2?"success":"warn", text:`Test 2 : ${note} >= 10 → ${t2?"vrai":"faux"}`}});
+        if(t2) {
+          rows.push({line:5, col:{note, t1:"faux", t2:"vrai", mention:'"Passable"'}, msg:{type:"success", text:'Branche ALORS interne → Afficher("Passable")'}, out:"Passable"});
+        } else {
+          rows.push({line:6, col:{note, t1:"faux", t2:"faux", mention:'"Insuffisant"'}, msg:{type:"warn", text:'Branche SINON interne → Afficher("Insuffisant")'}, out:"Insuffisant"});
+        }
+        rows.push({line:7, col:{note, t1:"—", t2:"—", mention:"—"}, msg:{type:"info", text:"Sortie des si imbriqués."}});
+      }
+      rows.push({line:8, col:{note, t1:"—", t2:"—", mention:"—"}, msg:{type:"info", text:"Fin de l'algorithme."}});
+      return rows;
+    },
+    lines: [
+      {t:"Variables note : réel", i:0},
+      {t:"<span class='kw'>si</span> note >= 12 <span class='kw'>alors</span>", i:0},
+      {t:"   Afficher(\"Bien\")", i:1},
+      {t:"<span class='kw'>sinon</span>", i:0},
+      {t:"   <span class='kw'>si</span> note >= 10 <span class='kw'>alors</span>", i:1},
+      {t:"      Afficher(\"Passable\")", i:2},
+      {t:"   <span class='kw'>sinon</span>  Afficher(\"Insuffisant\")  <span class='kw'>fsi</span>", i:1},
+      {t:"<span class='kw'>fsi</span>", i:0},
+      {t:"<span class='kw'>Fin</span>", i:0}
+    ]
+  },
+  {
+    name: "Selon (jours)",
+    vars: [{id:"jour", label:"jour ← (1 à 7)", type:"int", default:3}],
+    cols: ["Étape","jour","cas correspondant","affichage"],
+    steps: function(vals) {
+      const j = Math.max(1, Math.min(7, Math.round(vals.jour)));
+      const noms = ["","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+      const wk = j <= 5;
+      const nom = noms[j];
+      const lineMap = {1:2,2:3,3:4,4:5,5:6,6:7,7:8};
+      return [
+        {line:0, col:{jour:j, cas:"—", aff:"—"}, msg:{type:"info", text:`Déclaration : jour ← ${j}`}},
+        {line:1, col:{jour:j, cas:"évaluation...", aff:"—"}, msg:{type:"info", text:`Entrée dans le selon — on cherche le cas correspondant à jour = ${j}`}},
+        {line:lineMap[j], col:{jour:j, cas:`cas ${j} → ${nom}`, aff:`"${nom}"`}, msg:{type:wk?"success":"warn", text:`Cas ${j} trouvé → Afficher("${nom}")${!wk?" — week-end !":""}`}, out:nom},
+        {line:9, col:{jour:j, cas:"—", aff:"—"}, msg:{type:"info", text:"Sortie du selon — les autres cas sont ignorés."}},
+        {line:10, col:{jour:j, cas:"—", aff:"—"}, msg:{type:"info", text:"Fin de l'algorithme."}}
+      ];
+    },
+    lines: [
+      {t:"Variables jour : entier", i:0},
+      {t:"<span class='kw'>selon</span> jour", i:0},
+      {t:"   1 : Afficher(\"Lundi\")", i:1},
+      {t:"   2 : Afficher(\"Mardi\")", i:1},
+      {t:"   3 : Afficher(\"Mercredi\")", i:1},
+      {t:"   4 : Afficher(\"Jeudi\")", i:1},
+      {t:"   5 : Afficher(\"Vendredi\")", i:1},
+      {t:"   6 : Afficher(\"Samedi\")", i:1},
+      {t:"   7 : Afficher(\"Dimanche\")", i:1},
+      {t:"<span class='kw'>finselon</span>", i:0},
+      {t:"<span class='kw'>Fin</span>", i:0}
+    ]
+  }
+];
+
+let exIdx=0, stepIdx=0, steps=[], vals={}, outputs=[];
+
+function selectEx(i) {
+  exIdx = i;
+  document.querySelectorAll('.sel-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+  buildInputs();
+  reset();
+}
+
+function buildInputs() {
+  const ex = EXAMPLES[exIdx];
+  vals = {};
+  ex.vars.forEach(v => { vals[v.id] = v.default; });
+  document.getElementById('inputs-area').innerHTML = ex.vars.map(v =>
+    `<div class="val-input">
+      <label>${v.label}</label>
+      <input type="number" id="inp_${v.id}" value="${v.default}"
+        step="${v.type==='float'?'0.5':'1'}"
+        onchange="vals['${v.id}']=parseFloat(this.value)||0; reset()">
+    </div>`
+  ).join('');
+}
+
+function buildAlgo() {
+  const ex = EXAMPLES[exIdx];
+  document.getElementById('algo-display').innerHTML = ex.lines.map((l,i) => {
+    const pad = '   '.repeat(l.i);
+    return `<span class="algo-line" id="aline${i}">${pad}${l.t}</span>`;
+  }).join('');
+}
+
+function buildTraceHeader() {
+  const ex = EXAMPLES[exIdx];
+  document.getElementById('trace-head').innerHTML =
+    `<tr>${ex.cols.map(c=>`<th>${c.replace('\n','<br>')}</th>`).join('')}</tr>`;
+  document.getElementById('trace-body').innerHTML = '';
+}
+
+function highlightLines(activeLine) {
+  const ex = EXAMPLES[exIdx];
+  ex.lines.forEach((_,i) => {
+    const el = document.getElementById('aline'+i);
+    if(!el) return;
+    el.className = 'algo-line';
+    if(i === activeLine) el.classList.add('active');
+  });
+}
+
+function reset() {
+  steps = EXAMPLES[exIdx].steps(vals);
+  stepIdx = 0;
+  outputs = [];
+  buildAlgo();
+  buildTraceHeader();
+  document.getElementById('msg-area').innerHTML = '';
+  document.getElementById('output-area').textContent = '— (aucun affichage pour l\'instant)';
+  document.getElementById('output-area').classList.remove('has-val');
+  document.getElementById('step-ctr').textContent = `Étape 0 / ${steps.length}`;
+}
+
+function stepFwd() {
+  if(stepIdx >= steps.length) {
+    document.getElementById('msg-area').innerHTML =
+      `<div class="msg-box info">✓ Trace terminée. Modifiez la valeur d'entrée et cliquez ↺ pour recommencer.</div>`;
+    return;
+  }
+  const s = steps[stepIdx];
+  highlightLines(s.line);
+
+  document.getElementById('trace-body').querySelectorAll('tr.new-row')
+    .forEach(r => r.classList.remove('new-row'));
+
+  const keys = Object.keys(s.col);
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  tr.innerHTML = `<td>${stepIdx+1}</td>${keys.map(k=>`<td>${s.col[k]}</td>`).join('')}`;
+  document.getElementById('trace-body').appendChild(tr);
+
+  document.getElementById('msg-area').innerHTML = s.msg
+    ? `<div class="msg-box ${s.msg.type}">${s.msg.text}</div>` : '';
+
+  if(s.out) {
+    outputs.push(s.out);
+    const box = document.getElementById('output-area');
+    box.textContent = outputs.join('\n');
+    box.classList.add('has-val');
+  }
+
+  stepIdx++;
+  document.getElementById('step-ctr').textContent = `Étape ${stepIdx} / ${steps.length}`;
+
+  if(stepIdx >= steps.length) {
+    highlightLines(-1);
+    document.querySelectorAll('.algo-line').forEach(el => el.classList.add('done'));
+    document.getElementById('msg-area').innerHTML +=
+      `<div class="msg-box success" style="margin-top:6px">✓ Algorithme terminé. <span class="badge-fin">FIN</span></div>`;
+  }
+}
+
+function runAll() {
+  reset();
+  const total = EXAMPLES[exIdx].steps(vals).length;
+  for(let i=0; i<total; i++) stepFwd();
+}
+
+selectEx(0);
+</script>
+</body>
+</html>
