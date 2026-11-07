@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur d'algorithmes — RES1-03</title>
+<style>
+  :root { --c1:#1a3a6b; --c1bg:#eef4fb; --blue:#2563eb; --bluebg:#dbeafe; --green:#1e7b34; --greenbg:#d1f5d8;
+          --yel:#c9a800; --yelbg:#fff1a8; --red:#c0392b; --redbg:#fde2dd; --vio:#5b2160; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Helvetica,Arial,sans-serif; color:#222; font-size:15px; background:#fff; }
+  .wrap { max-width:1150px; margin:0 auto; padding:10px 12px 30px; }
+  h1 { font-size:19px; color:#fff; background:var(--c1); margin:0 0 10px; padding:11px 16px; border-radius:8px; }
+  h1 small { display:block; font-size:12.5px; font-weight:normal; opacity:.85; margin-top:2px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:flex-end; background:var(--c1bg); border-radius:8px; padding:9px 12px; }
+  .bar label { font-size:12.5px; color:#444; display:flex; flex-direction:column; gap:3px; }
+  select, input[type=text] { font-size:14px; padding:5px 7px; border:1px solid #9fb3d1; border-radius:5px; }
+  select#ex { max-width:470px; } input#inputs { width:260px; }
+  .btns { display:flex; gap:8px; flex-wrap:wrap; margin:9px 0 4px; align-items:center; }
+  button { font-size:14px; padding:6px 12px; border-radius:6px; border:1px solid var(--c1); background:#fff; color:var(--c1); cursor:pointer; }
+  button.main { background:var(--c1); color:#fff; } button:disabled { opacity:.4; cursor:default; }
+  .desc { font-size:13.5px; color:#333; margin:4px 0 8px; }
+  .grid { display:grid; grid-template-columns: minmax(0,1.15fr) minmax(0,1fr); gap:12px; }
+  @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
+  .code { font-family:Consolas,Monaco,monospace; font-size:13px; background:#f6f6f6; border:1px solid #ddd; border-radius:7px; padding:6px 0; overflow-x:auto; max-height:640px; overflow-y:auto; }
+  .code div { padding:0 10px 0 0; white-space:pre; border-left:4px solid transparent; line-height:1.55; }
+  .code .ln { display:inline-block; width:30px; text-align:right; color:#aaa; margin-right:10px; user-select:none; }
+  .code .cm { color:#7a7a7a; }
+  .code .test { background:var(--bluebg); border-left-color:var(--blue); }
+  .code .instr, .code .io, .code .call, .code .return { background:var(--greenbg); border-left-color:var(--green); }
+  .code .exit, .code .end { background:var(--yelbg); border-left-color:var(--yel); }
+  .code .error { background:var(--redbg); border-left-color:var(--red); }
+  .code .pending { background:#eef0ff; outline:2px dashed var(--c1); border-left-color:var(--c1); }
+  .panel { border:1px solid #cfdaea; border-radius:7px; padding:8px 10px; background:#fbfcfe; margin-bottom:10px; }
+  .panel h3 { margin:0 0 6px; font-size:13.5px; color:var(--c1); }
+  .frame { border:2px solid var(--c1); border-radius:7px; padding:6px 8px; margin-bottom:8px; background:#fff; }
+  .frame.sub { border-color:var(--vio); background:#fbf6fc; }
+  .frame .ft { font-size:12.5px; font-weight:bold; color:var(--c1); margin-bottom:4px; } .frame.sub .ft { color:var(--vio); }
+  .casiers { display:flex; flex-wrap:wrap; gap:8px; }
+  .casier { min-width:74px; border:2px solid #9fb3d1; border-radius:6px; text-align:center; background:#fff; }
+  .casier .nm { font-size:12px; background:#e7eef8; padding:1px 6px; font-family:Consolas,Monaco,monospace; }
+  .casier .vl { font-weight:bold; font-size:16px; padding:3px 6px; font-family:Consolas,Monaco,monospace; }
+  .casier .old { font-size:11.5px; color:#999; text-decoration:line-through; text-decoration-color:var(--red); }
+  .casier .md { font-size:10.5px; color:var(--vio); padding:0 4px 2px; }
+  .casier.chg { border-color:var(--green); box-shadow:0 0 0 2px var(--greenbg); }
+  .casier.empty .vl { color:#bbb; }
+  .arr { display:inline-flex; gap:3px; flex-wrap:wrap; padding:3px; }
+  .arr .c { min-width:34px; text-align:center; } .arr .c .i { font-size:10px; color:#888; }
+  .arr .c .v { border:1.5px solid #9fb3d1; border-radius:4px; font-weight:bold; font-family:Consolas,Monaco,monospace; padding:2px 4px; font-size:13px; }
+  .fiche { border:1.5px solid #b8a0bf; border-radius:6px; background:#fff; margin:3px; font-size:12px; text-align:left; display:inline-block; vertical-align:top; }
+  .fiche .fh { background:#efe3f1; padding:1px 6px; font-weight:bold; font-size:11.5px; }
+  .fiche div.f { padding:1px 6px; font-family:Consolas,Monaco,monospace; }
+  .screen { background:#111; color:#9ef59e; font-family:Consolas,Monaco,monospace; font-size:13px; border-radius:6px; padding:6px 9px; min-height:44px; max-height:140px; overflow-y:auto; white-space:pre-wrap; }
+  .msg { font-size:14px; min-height:38px; } .msg.error { color:var(--red); font-weight:bold; }
+  table.trace { border-collapse:collapse; font-size:12.5px; width:100%; }
+  table.trace th { background:var(--c1); color:#fff; padding:4px 6px; font-weight:normal; position:sticky; top:0; }
+  table.trace td { border:1px solid #d7e0ee; padding:3px 6px; text-align:center; font-family:Consolas,Monaco,monospace; }
+  table.trace td.act { text-align:left; font-family:Helvetica,Arial,sans-serif; max-width:300px; }
+  table.trace tr.test td.act { color:#0b3a8f; } table.trace tr.exit td.act { color:#7a6200; }
+  table.trace td.chg { background:var(--greenbg); font-weight:bold; }
+  .tracebox { max-height:330px; overflow:auto; border:1px solid #cfdaea; border-radius:7px; }
+  textarea#src { width:100%; height:360px; font-family:Consolas,Monaco,monospace; font-size:13px; border:1px solid #9fb3d1; border-radius:6px; padding:8px; }
+  #qbox { border:2px solid var(--c1); background:#fff; display:none; }
+  #qinput input { width:110px; font-size:14px; padding:4px 6px; } #qinput button { margin-right:6px; }
+  .legend { font-size:12px; color:#444; margin:2px 0 6px; }
+  .legend span.sw { display:inline-block; width:13px; height:11px; border:2px solid; border-radius:3px; vertical-align:middle; margin:0 3px 0 9px; }
+  .hint { font-size:12.5px; color:#555; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>▶️ Simulateur d'algorithmes — pas à pas <small>RES1-03 · Bases de la programmation · BUT Science des Données S1</small></h1>
+<div class="bar">
+  <label>Exemple <select id="ex"></select></label>
+  <label>Valeurs saisies (dans l'ordre, séparées par ;)<input type="text" id="inputs"></label>
+  <label style="flex-direction:row;align-items:center;gap:6px;font-size:14px;color:var(--c1);font-weight:bold;"><input type="checkbox" id="predict"> 🧠 Mode prédiction</label>
+</div>
+<div class="btns">
+  <button class="main" id="step">▶ Pas suivant</button>
+  <button id="run">⏩ Jusqu'à la fin</button>
+  <button id="reset">↺ Recommencer</button>
+  <button id="edit">✏️ Modifier / coller mon algorithme</button>
+</div>
+<div class="desc" id="desc"></div>
+<div id="editor" style="display:none;margin-bottom:10px;">
+  <textarea id="src" spellcheck="false"></textarea>
+  <div class="btns"><button class="main" id="load">✔ Charger cet algorithme</button><span class="hint">Écrivez ← avec &lt;-, ≤ avec &lt;=, ≥ avec &gt;=, ≠ avec &lt;&gt;. Les commentaires entre { } sont ignorés.</span></div>
+</div>
+<div class="legend">Code : <span class="sw" style="background:var(--bluebg);border-color:var(--blue)"></span>test
+  <span class="sw" style="background:var(--greenbg);border-color:var(--green)"></span>instruction exécutée
+  <span class="sw" style="background:var(--yelbg);border-color:var(--yel)"></span>sortie de boucle
+  <span class="sw" style="background:var(--redbg);border-color:var(--red)"></span>erreur</div>
+<div class="grid">
+  <div><div class="code" id="code"></div></div>
+  <div>
+    <div class="panel" id="qbox"><h3>🧠 Ta prédiction</h3><div id="qtext" style="font-size:14px;margin-bottom:6px;"></div>
+      <div id="qinput"></div><div id="qfb" style="font-size:13.5px;margin-top:6px;min-height:18px;"></div>
+      <div class="hint" style="margin-top:4px;">Prédictions justes : <b id="qok">0</b> · erreurs : <b id="qko">0</b></div></div>
+    <div class="panel"><h3>Ce qui se passe</h3><div class="msg" id="msg">Cliquez sur « Pas suivant ».</div></div>
+    <div class="panel"><h3>Mémoire (les casiers)</h3><div id="mem"></div></div>
+    <div class="panel"><h3>Écran</h3><div class="screen" id="screen"></div></div>
+  </div>
+</div>
+<div class="panel" style="margin-top:4px;"><h3>Tableau de trace <span class="hint">(une ligne par pas ; en vert, la variable qui vient de changer)</span></h3>
+  <div class="tracebox"><table class="trace" id="trace"></table></div></div>
+</div>
+<script>
+// =====================================================================
+//  Interpréteur pas à pas du pseudo-code RES1-03 (conventions du cours)
+//  ← · si/alors/sinon/fsi · selon/finselon · tant que/faire/ftq ·
+//  pour/à/faire/fpour · répéter/jusqu'à · Fonction/FinFonction ·
+//  Procédure/FinProcédure (FIXE = photocopie, MODIF = clés du casier) ·
+//  tableaux T[k] (indices à partir de 1) · enregistrements e.champ
+// =====================================================================
+"use strict";
+const ALGO = (() => {
+
+class AlgoError extends Error { constructor(msg, line) { super(msg); this.line = line; } }
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+// ------------------------------------------------------------------ lexer
+const KW = new Set(["et", "ou", "non", "div", "mod", "vrai", "faux"]);
+function lex(src, line) {
+  const t = []; let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (/\s/.test(c)) { i++; continue; }
+    if (/[0-9]/.test(c)) { let j = i; while (j < src.length && /[0-9.]/.test(src[j])) j++;
+      t.push({ k: "num", v: parseFloat(src.slice(i, j)) }); i = j; continue; }
+    if (c === '"' || c === "«" || c === "“") { const close = c === '"' ? '"' : (c === "«" ? "»" : "”");
+      const j = src.indexOf(close, i + 1); if (j < 0) throw new AlgoError("guillemet non fermé", line);
+      t.push({ k: "str", v: c === '"' ? src.slice(i + 1, j) : src.slice(i + 1, j).trim() }); i = j + 1; continue; }
+    if (/[A-Za-zÀ-ÖØ-öø-ÿŒœ_]/.test(c)) { let j = i; while (j < src.length && /[A-Za-zÀ-ÖØ-öø-ÿŒœ_0-9]/.test(src[j])) j++;
+      const w = src.slice(i, j);
+      const n = norm(w); t.push(KW.has(n) ? { k: "kw", v: n } : { k: "id", v: w }); i = j; continue; }
+    const two = src.slice(i, i + 2);
+    if (["<-", "<=", ">=", "<>", "!="].includes(two)) { t.push({ k: "op", v: { "<-": "←", "<=": "≤", ">=": "≥", "<>": "≠", "!=": "≠" }[two] }); i += 2; continue; }
+    if ("←≤≥≠=<>+-*×/()[],.:".includes(c)) { t.push({ k: "op", v: c === "*" ? "×" : c }); i++; continue; }
+    if (c === "−") { t.push({ k: "op", v: "-" }); i++; continue; }
+    throw new AlgoError(`caractère inattendu « ${c} »`, line);
+  }
+  return t;
+}
+
+// ------------------------------------------------------------------ expressions (Pratt)
+function parseExpr(tokens, line) {
+  let p = 0;
+  const peek = () => tokens[p], next = () => tokens[p++];
+  const isOp = (v) => peek() && peek().k === "op" && peek().v === v;
+  const isKw = (v) => peek() && peek().k === "kw" && peek().v === v;
+  const BIN = { ou: 1, et: 2, "=": 4, "≠": 4, "<": 4, ">": 4, "≤": 4, "≥": 4, "+": 5, "-": 5, "×": 6, "/": 6, div: 6, mod: 6 };
+  function binOp() { const t = peek(); if (!t) return null;
+    if (t.k === "kw" && BIN[t.v] !== undefined && !["non", "vrai", "faux"].includes(t.v)) return t.v;
+    if (t.k === "op" && BIN[t.v] !== undefined) return t.v; return null; }
+  function primary() {
+    const t = next(); if (!t) throw new AlgoError("expression incomplète", line);
+    let e;
+    if (t.k === "num") e = { t: "num", v: t.v };
+    else if (t.k === "str") e = { t: "str", v: t.v };
+    else if (t.k === "kw" && (t.v === "vrai" || t.v === "faux")) e = { t: "bool", v: t.v === "vrai" };
+    else if (t.k === "kw" && t.v === "non") e = { t: "not", a: expr(3) };
+    else if (t.k === "op" && t.v === "-") e = { t: "neg", a: expr(7) };
+    else if (t.k === "op" && t.v === "(") { e = expr(0); if (!isOp(")")) throw new AlgoError("parenthèse « ) » manquante", line); next(); }
+    else if (t.k === "id") {
+      if (isOp("(")) { next(); const args = []; if (!isOp(")")) { do { args.push(expr(0)); } while (isOp(",") && next()); }
+        if (!isOp(")")) throw new AlgoError("parenthèse « ) » manquante après les arguments", line); next(); e = { t: "call", name: t.v, args }; }
+      else e = { t: "var", name: t.v };
+    } else throw new AlgoError(`« ${t.v} » inattendu dans l'expression`, line);
+    for (;;) {
+      if (isOp("[")) { next(); const ix = expr(0); if (!isOp("]")) throw new AlgoError("crochet « ] » manquant", line); next(); e = { t: "idx", a: e, i: ix }; }
+      else if (isOp(".") && tokens[p + 1] && tokens[p + 1].k === "id") { next(); e = { t: "fld", a: e, f: next().v }; }
+      else break;
+    }
+    return e;
+  }
+  function expr(minP) {
+    let left = primary();
+    for (;;) { const op = binOp(); if (!op || BIN[op] <= minP) break; next(); left = { t: "bin", op, l: left, r: expr(BIN[op]) }; }
+    return left;
+  }
+  const e = expr(0);
+  return { e, rest: tokens.slice(p) };
+}
+function exprFrom(src, line) { const { e, rest } = parseExpr(lex(src, line), line);
+  if (rest.length) throw new AlgoError(`fin d'expression inattendue : « ${rest.map(x => x.v).join(" ")} »`, line); return e; }
+
+// ------------------------------------------------------------------ split arguments at top-level commas
+function splitTop(s, sep = ",") { const out = []; let d = 0, q = false, cur = "";
+  for (const c of s) { if (c === '"') q = !q; if (!q && (c === "(" || c === "[")) d++; if (!q && (c === ")" || c === "]")) d--;
+    if (!q && d === 0 && c === sep) { out.push(cur); cur = ""; } else cur += c; }
+  if (cur.trim() !== "") out.push(cur); return out.map(x => x.trim()); }
+
+// ------------------------------------------------------------------ types
+function parseType(s, line) {
+  const n = norm(s.trim());
+  let m = n.match(/^tableau\s+(?:d'|de\s+|d\s+)(.+)$/);
+  if (m) return { arr: true, elem: parseType(m[1], line) };
+  if (/^entiers?$/.test(n)) return { base: "entier" };
+  if (/^reels?$/.test(n)) return { base: "réel" };
+  if (/^chaines?$/.test(n) || /^chaines? de caracteres$/.test(n)) return { base: "chaîne" };
+  if (/^caracteres?$/.test(n)) return { base: "chaîne" };
+  if (/^booleens?$/.test(n)) return { base: "booléen" };
+  return { rec: s.trim() };
+}
+
+// ------------------------------------------------------------------ program parser
+function parseProgram(src) {
+  // commentaires { … } (éventuellement sur plusieurs lignes) remplacés par des espaces
+  let clean = "", depth = 0, inStr = false;
+  for (const c of src) { if (c === '"' && depth === 0) inStr = !inStr;
+    if (!inStr && c === "{") { depth++; clean += " "; continue; }
+    if (!inStr && c === "}" && depth > 0) { depth--; clean += " "; continue; }
+    clean += depth > 0 && c !== "\n" ? " " : c; }
+  const raw = src.split("\n"), L = clean.split("\n").map(s => s.replace(/\t/g, "    "));
+  const prog = { types: {}, consts: {}, subs: {}, main: null, lines: raw };
+  let i = 0;
+  const N = (k) => norm(L[k].trim());
+  const err = (msg, k) => { throw new AlgoError(msg, k + 1); };
+
+  function parseDecls(scope) {   // lit « Variables … » et ses lignes de suite, « Constante … »
+    while (i < L.length) {
+      const s = L[i].trim(), n = norm(s);
+      if (s === "") { i++; continue; }
+      let m;
+      if ((m = s.match(/^constante\s+\(?\s*([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*(?::\s*[^)=←]+)?\)?\s*(?:=|←|<-)\s*(.+)$/i))) {
+        prog.consts[norm(m[1])] = { name: m[1], e: exprFrom(m[2], i + 1) }; i++; continue; }
+      if (/^variables?\b/.test(n)) { declLine(s.replace(/^variables?\s*/i, ""), scope, i); i++;
+        while (i < L.length && L[i].trim() !== "" && /^[A-Za-zÀ-ÿ_][\wÀ-ÿ]*(\s*\[[^\]]+\])?\s*(,\s*[A-Za-zÀ-ÿ_][\wÀ-ÿ]*(\s*\[[^\]]+\])?)*\s*:/.test(L[i].trim())
+               && !/^(debut|si|pour|tant|repeter|afficher|saisir)\b/.test(N(i))) { declLine(L[i].trim(), scope, i); i++; }
+        continue; }
+      break;
+    }
+  }
+  function declLine(s, scope, k) {
+    const c = s.lastIndexOf(":"); if (c < 0) err("déclaration sans « : type »", k);
+    const type = parseType(s.slice(c + 1), k + 1);
+    for (const part of splitTop(s.slice(0, c))) {
+      const m = part.match(/^([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*(?:\[(.+)\])?$/); if (!m) err(`nom de variable incorrect : « ${part} »`, k);
+      scope.push({ name: m[1], type: m[2] ? { arr: true, elem: type.arr ? type.elem : type, size: exprFrom(m[2], k + 1) } : type, line: k + 1 });
+    }
+  }
+
+  function parseBlock(stops) {   // renvoie [instructions], s'arrête (sans consommer) sur un mot d'arrêt
+    const body = [];
+    while (i < L.length) {
+      const s = L[i].trim(), n = norm(s), k = i;
+      if (s === "") { i++; continue; }
+      const first = n.split(/[\s(]/)[0];
+      if (stops.some(st => st instanceof RegExp ? st.test(n) : first === st)) return body;
+      const ENDS = ["fin", "fsi", "finsi", "sinon", "ftq", "fintantque", "fpour", "finpour", "finselon", "fselon", "finfonction", "finprocedure", "jusqu"];
+      if (ENDS.some(e => first === e || (e === "jusqu" && /^jusqu/.test(first)))) {
+        const want = stops.filter(x => typeof x === "string").join(" ou ");
+        err(`« ${s} » arrive alors que le bloc ouvert plus haut attend ${want || "sa fin"} : un fsi, ftq ou fpour manque-t-il ?`, k);
+      }
+      let m;
+      if (/^si\b/.test(n)) {
+        m = s.match(/^si\s+(.+?)\s+alors\s*$/i); if (!m) err("« si … alors » attendu", k);
+        i++; const yes = parseBlock(["sinon", "fsi", "finsi"]); let no = null, elseLine = null;
+        if (i < L.length && N(i).startsWith("sinon")) { if (/^sinon\s+si\b/.test(N(i))) err("« sinon si » n'est pas utilisé dans ce cours : écrivez un nouveau si dans le sinon, avec son propre fsi", i);
+          elseLine = i + 1; i++; no = parseBlock(["fsi", "finsi"]); }
+        if (i >= L.length) err("« fsi » manquant pour ce si", k); const endLine = i + 1; i++;
+        body.push({ t: "si", line: k + 1, c: exprFrom(m[1], k + 1), yes, no, elseLine, endLine }); continue;
+      }
+      if (/^selon\b/.test(n)) {
+        m = s.match(/^selon\s+(.+?)(\s+faire)?\s*$/i); const sel = exprFrom(m[1], k + 1); i++; const cases = [];
+        while (i < L.length && !/^(finselon|fselon|fin selon)/.test(N(i))) {
+          const cs = L[i].trim(); if (cs === "") { i++; continue; }
+          const c2 = cs.indexOf(":"); if (c2 < 0) err("cas du selon : « valeurs : instruction » attendu", i);
+          const lab = cs.slice(0, c2).trim(), inst = cs.slice(c2 + 1).trim(); const labN = norm(lab);
+          let tests;
+          if (/^(autres?|sinon|autrement)$/.test(labN)) tests = null;
+          else tests = splitTop(lab).map(x => { let mm;
+            if ((mm = x.match(/^(<=|>=|<>|≤|≥|≠|<|>)\s*(.+)$/))) return { op: { "<=": "≤", ">=": "≥", "<>": "≠" }[mm[1]] || mm[1], e: exprFrom(mm[2], i + 1) };
+            if ((mm = x.match(/^(.+?)\s+(?:à|a)\s+(.+)$/))) return { op: "range", a: exprFrom(mm[1], i + 1), b: exprFrom(mm[2], i + 1) };
+            return { op: "=", e: exprFrom(x, i + 1) }; });
+          cases.push({ line: i + 1, label: lab, tests, body: [stmt(inst, i)] }); i++;
+        }
+        if (i >= L.length) err("« finselon » manquant", k); const endLine = i + 1; i++;
+        body.push({ t: "selon", line: k + 1, e: sel, cases, endLine }); continue;
+      }
+      if (/^pour\b/.test(n)) {
+        m = s.match(/^pour\s+([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*(?:←|<-)\s*(.+?)\s+(?:à|a|jusqu'à)\s+(.+?)(?:\s+pas\s+(.+?))?\s+faire\s*$/i);
+        if (!m) err("« pour k ← début à fin faire » attendu", k);
+        i++; const b = parseBlock(["fpour", "finpour"]); if (i >= L.length) err("« fpour » manquant", k); const endLine = i + 1; i++;
+        body.push({ t: "pour", line: k + 1, v: m[1], a: exprFrom(m[2], k + 1), b: exprFrom(m[3], k + 1), step: m[4] ? exprFrom(m[4], k + 1) : null, body: b, endLine }); continue;
+      }
+      if (/^tant\s*que\b/.test(n)) {
+        m = s.match(/^tant\s*que\s+(.+?)\s+faire\s*$/i); if (!m) err("« tant que … faire » attendu", k);
+        i++; const b = parseBlock(["ftq", "fintantque", /^fin tant que/]); if (i >= L.length) err("« ftq » manquant", k); const endLine = i + 1; i++;
+        body.push({ t: "tq", line: k + 1, c: exprFrom(m[1], k + 1), body: b, endLine }); continue;
+      }
+      if (/^repeter\b/.test(n)) {
+        i++; const b = parseBlock([/^jusqu/]); if (i >= L.length) err("« jusqu'à … » manquant", k);
+        const mm = L[i].trim().match(/^jusqu['’]?\s*(?:à|a|au)?\s+(.+)$/i); const endLine = i + 1; const c = exprFrom(mm[1], i + 1); i++;
+        body.push({ t: "rep", line: k + 1, body: b, c, endLine }); continue;
+      }
+      body.push(stmt(s, k)); i++;
+    }
+    return body;
+  }
+  function stmt(s, k) {
+    let m;
+    const n = norm(s);
+    if ((m = s.match(/^retourner?\s*\((.*)\)\s*$/i))) return { t: "ret", line: k + 1, e: exprFrom(m[1], k + 1) };
+    if ((m = s.match(/^afficher\s*\((.*)\)\s*$/i))) return { t: "aff", line: k + 1, args: m[1].trim() === "" ? [] : splitTop(m[1]).map(a => exprFrom(a, k + 1)) };
+    if ((m = s.match(/^(saisir|lire)\s*\((.*)\)\s*$/i))) return { t: "sai", line: k + 1, targets: splitTop(m[2]).map(a => exprFrom(a, k + 1)) };
+    const toks = lex(s, k + 1); const ai = toks.findIndex(x => x.k === "op" && x.v === "←");
+    if (ai > 0) { const lhs = parseExpr(toks.slice(0, ai), k + 1); if (lhs.rest.length) err("membre gauche de l'affectation incorrect", k);
+      const rhs = parseExpr(toks.slice(ai + 1), k + 1); if (rhs.rest.length) err(`fin d'expression inattendue : « ${rhs.rest.map(x => x.v).join(" ")} »`, k);
+      if (!["var", "idx", "fld"].includes(lhs.e.t)) err("on ne peut affecter qu'une variable, une case ou un champ", k);
+      return { t: "aff_", line: k + 1, lhs: lhs.e, rhs: rhs.e }; }
+    if (toks.length && toks[0].k === "op" && toks[0].v === "=") err("l'affectation s'écrit avec ← (tapez <-), pas avec =", k);
+    const ex = parseExpr(toks, k + 1);
+    if (ex.e.t === "call" && !ex.rest.length) return { t: "callst", line: k + 1, e: ex.e };
+    if (toks.some(x => x.k === "op" && x.v === "=")) err("l'affectation s'écrit avec ← (tapez <-), pas avec =", k);
+    err(`instruction non reconnue : « ${s} »`, k);
+  }
+  function parseParams(s, k) {
+    if (!s.trim()) return [];
+    const out = [];
+    for (const part of splitTop(s)) {
+      const m = part.match(/^(FIXE|MODIF|E|S|ES)?\s*([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*:\s*(.+)$/i);
+      if (!m) err(`paramètre incorrect : « ${part} » (forme attendue : FIXE nom : type)`, k);
+      const mode = (m[1] || "FIXE").toUpperCase(); out.push({ mode: mode === "FIXE" || mode === "E" ? "FIXE" : "MODIF", name: m[2], type: parseType(m[3], k + 1) });
+    }
+    return out;
+  }
+
+  while (i < L.length) {
+    const s = L[i].trim(), n = norm(s); let m;
+    if (s === "") { i++; continue; }
+    if ((m = s.match(/^type\s+([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*=\s*enregistrement\s*$/i))) {
+      const name = m[1], fields = []; i++;
+      while (i < L.length && !/^(finenregistrement|fenregistrement|fin enregistrement|fin)\b/.test(N(i))) { if (L[i].trim()) declLine(L[i].trim(), fields, i); i++; }
+      i++; prog.types[norm(name)] = { name, fields }; continue;
+    }
+    if ((m = s.match(/^(fonction|proc[ée]dure)\s+([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*\((.*?)\)?\s*(?::\s*(.+))?$/i))) {
+      const isF = /^fonction/i.test(m[1]), k = i;
+      let header = s, j = i;  // en-tête éventuellement sur plusieurs lignes
+      while (!/\)\s*(:\s*.+)?$/.test(header.trim()) && j + 1 < L.length) { j++; header += " " + L[j].trim(); }
+      const mm = header.match(/^(?:fonction|proc[ée]dure)\s+([A-Za-zÀ-ÿ_][\wÀ-ÿ]*)\s*\((.*)\)\s*(?::\s*(.+))?$/i);
+      if (!mm) err("en-tête de sous-programme incorrect", k);
+      i = j + 1; const locals = []; parseDecls(locals);
+      if (!/^debut/.test(N(i) || "")) err("« Début » attendu", i);
+      const startLine = i + 1; i++;
+      const endRe = isF ? ["finfonction", /^fin fonction/, "ffonction"] : ["finprocedure", /^fin procedure/, "fproc", "fprocedure"];
+      const body = parseBlock(endRe); if (i >= L.length) err(isF ? "« FinFonction » manquant" : "« FinProcédure » manquant", k);
+      const endLine = i + 1; i++;
+      prog.subs[norm(mm[1])] = { name: mm[1], isF, params: parseParams(mm[2], k), ret: isF ? parseType(mm[3] || "entier", k + 1) : null, locals, body, line: k + 1, startLine, endLine };
+      continue;
+    }
+    if ((m = s.match(/^algorithme\s+(.+)$/i))) {
+      const k = i; i++; const locals = []; parseDecls(locals);
+      if (!/^debut/.test(N(i) || "")) err("« Début » attendu après les déclarations", i);
+      const startLine = i + 1; i++;
+      const body = parseBlock(["fin"]); if (i >= L.length) err("« Fin » manquant", k); const endLine = i + 1; i++;
+      prog.main = { name: m[1].trim(), locals, body, line: k + 1, startLine, endLine }; continue;
+    }
+    if (/^(constante|variables?)\b/.test(n)) { const loc = []; parseDecls(loc); if (loc.length) err("les variables se déclarent dans l'algorithme ou le sous-programme", i - 1); continue; }
+    err(`ligne inattendue : « ${s} »`, i);
+  }
+  if (!prog.main) throw new AlgoError("aucun « Algorithme … » trouvé", 1);
+  return prog;
+}
+
+// ------------------------------------------------------------------ values
+const isArr = (v) => v && v.kind === "arr", isRec = (v) => v && v.kind === "rec";
+function clone(v) { if (isArr(v)) return { kind: "arr", type: v.type, cells: v.cells.map(clone) };
+  if (isRec(v)) { const f = {}; for (const k in v.fields) f[k] = clone(v.fields[k]); return { kind: "rec", type: v.type, fields: f, order: v.order }; } return v; }
+function fmt(v) {
+  if (v === undefined) return "?";
+  if (typeof v === "boolean") return v ? "vrai" : "faux";
+  if (typeof v === "number") return Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100).replace(".", ",");
+  if (typeof v === "string") return v;
+  if (isArr(v)) return "[" + v.cells.map(fmt).join(" ; ") + "]";
+  if (isRec(v)) return "{" + v.order.map(k => k + " : " + fmt(v.fields[norm(k)])).join(", ") + "}";
+  return String(v);
+}
+const show = (v) => typeof v === "string" ? `"${v}"` : fmt(v);
+
+// ------------------------------------------------------------------ interpreter (generator of events)
+function* run(prog, inputs) {
+  const queue = [...inputs];
+  const screen = [];
+  const frames = [];
+  let tours = 0;
+  const C = {};   // constantes évaluées
+  for (const k in prog.consts) C[k] = evalStatic(prog.consts[k].e);
+  function evalStatic(e) { if (e.t === "num") return e.v; if (e.t === "neg") return -evalStatic(e.a); if (e.t === "var" && C[norm(e.name)] !== undefined) return C[norm(e.name)];
+    throw new AlgoError("constante : valeur numérique attendue", 1); }
+  function make(type, line) {
+    if (type.arr) { const n = type.size ? evalSize(type.size, line) : 0; return { kind: "arr", type: type.elem, cells: Array.from({ length: n }, () => make(type.elem, line)) }; }
+    if (type.rec) { const T = prog.types[norm(type.rec)] || prog.types[norm(type.rec).replace(/s$/, "")]; if (!T) throw new AlgoError(`type « ${type.rec} » inconnu (déclarez-le avec Type … = enregistrement)`, line);
+      const f = {}; for (const fd of T.fields) f[norm(fd.name)] = make(fd.type, line); return { kind: "rec", type: T.name, fields: f, order: T.fields.map(x => x.name) }; }
+    return undefined;
+  }
+  function evalSize(e, line) { if (e.t === "num") return e.v; if (e.t === "var" && C[norm(e.name)] !== undefined) return C[norm(e.name)];
+    throw new AlgoError("la taille d'un tableau doit être un nombre ou une constante", line); }
+  const cur = () => frames[frames.length - 1];
+  function cellOf(name, line) { const k = norm(name); const f = cur();
+    if (f.vars.has(k)) return f.vars.get(k);
+    if (C[k] !== undefined) return { val: C[k], name, konst: true, hist: [] };
+    throw new AlgoError(`variable « ${name} » non déclarée dans ${f.name}`, line); }
+  function snapshot() {
+    return frames.map(f => ({ name: f.name, isMain: f.isMain, vars: [...f.vars.values()].filter(c => !c.konst).map(c => ({
+      name: c.name, val: clone(c.val), type: c.type, mode: c.mode, ref: c.refLabel || null, hist: c.hist.slice(-2).map(clone) })) }));
+  }
+  const ev = (o) => ({ ...o, frames: snapshot(), screen: [...screen], tours, depth: frames.length });
+
+  // --- lvalues : renvoie {get, set, label}
+  function* lval(e, line) {
+    if (e.t === "var") { const c = cellOf(e.name, line); if (c.konst) throw new AlgoError(`« ${e.name} » est une constante : on ne peut pas la modifier`, line);
+      return { get: () => c.val, set: (v) => { const o = c.val; if (o !== undefined && !isArr(o) && !isRec(o)) c.hist.push(o); c.val = v; }, label: c.name, cell: c }; }
+    if (e.t === "idx") { const base = yield* lval(e.a, line); const arr = base.get();
+      if (!isArr(arr)) throw new AlgoError(`« ${base.label} » n'est pas un tableau`, line);
+      const k = yield* val(e.i, line); checkIdx(arr, k, base.label, line);
+      return { get: () => arr.cells[k - 1], set: (v) => { arr.cells[k - 1] = v; }, label: `${base.label}[${k}]` }; }
+    if (e.t === "fld") { const base = yield* lval(e.a, line); const r = base.get();
+      if (!isRec(r)) throw new AlgoError(`« ${base.label} » n'est pas un enregistrement`, line);
+      const f = norm(e.f); if (!(f in r.fields)) throw new AlgoError(`le type ${r.type} n'a pas de champ « ${e.f} »`, line);
+      return { get: () => r.fields[f], set: (v) => { r.fields[f] = v; }, label: `${base.label}.${e.f}` }; }
+    throw new AlgoError("on ne peut affecter qu'une variable, une case ou un champ", line);
+  }
+  function checkIdx(arr, k, label, line) {
+    if (typeof k !== "number" || !Number.isInteger(k)) throw new AlgoError(`indice de ${label} non entier`, line);
+    if (k < 1 || k > arr.cells.length) throw new AlgoError(`indice ${k} hors bornes : ${label} a des cases numérotées de 1 à ${arr.cells.length} (erreur 9 en VBA)`, line);
+  }
+  const num = (v, line, what) => { if (typeof v !== "number") throw new AlgoError(`${what} : nombre attendu, ${fmt(v)} reçu`, line); return v; };
+  function* val(e, line) {
+    switch (e.t) {
+      case "num": case "str": case "bool": return e.v;
+      case "var": { const c = cellOf(e.name, line); if (c.val === undefined) throw new AlgoError(`« ${e.name} » est utilisée avant d'avoir reçu une valeur (casier vide)`, line); return c.val; }
+      case "idx": case "fld": { const lv = yield* lval(e, line); const v = lv.get();
+        if (v === undefined) throw new AlgoError(`${lv.label} est lue avant d'avoir reçu une valeur`, line); return v; }
+      case "neg": return -num(yield* val(e.a, line), line, "signe moins");
+      case "not": { const v = yield* val(e.a, line); if (typeof v !== "boolean") throw new AlgoError("NON s'applique à un booléen", line); return !v; }
+      case "bin": {
+        const a = yield* val(e.l, line), b = yield* val(e.r, line);
+        switch (e.op) {
+          case "et": case "ou": if (typeof a !== "boolean" || typeof b !== "boolean") throw new AlgoError(`${e.op.toUpperCase()} relie deux conditions (vrai ou faux)`, line);
+            return e.op === "et" ? a && b : a || b;
+          case "+": if (typeof a === "string" || typeof b === "string") return fmt(a) + fmt(b); return num(a, line, "+") + num(b, line, "+");
+          case "-": return num(a, line, "-") - num(b, line, "-");
+          case "×": return num(a, line, "×") * num(b, line, "×");
+          case "/": if (num(b, line, "/") === 0) throw new AlgoError("division par zéro", line); return num(a, line, "/") / b;
+          case "div": if (num(b, line, "div") === 0) throw new AlgoError("division par zéro", line); return Math.trunc(num(a, line, "div") / b);
+          case "mod": return num(a, line, "mod") % num(b, line, "mod");
+          case "=": return eq(a, b, line); case "≠": return !eq(a, b, line);
+          case "<": return cmp(a, b, line) < 0; case ">": return cmp(a, b, line) > 0;
+          case "≤": return cmp(a, b, line) <= 0; case "≥": return cmp(a, b, line) >= 0;
+        }
+      }
+      case "call": { const r = yield* call(e, line, true); return r; }
+    }
+    throw new AlgoError("expression non reconnue", line);
+  }
+  function eq(a, b, line) { if (isArr(a) || isRec(a) || isArr(b) || isRec(b)) throw new AlgoError("on ne compare pas un tableau ou une fiche entière d'un coup : comparez case par case ou champ par champ", line);
+    return a === b; }
+  function cmp(a, b, line) { if (typeof a === "string" && typeof b === "string") return a < b ? -1 : a > b ? 1 : 0; return num(a, line, "comparaison") - num(b, line, "comparaison"); }
+  const src = (line) => (prog.lines[line - 1] || "").trim();
+
+  // --- appel de sous-programme
+  function* call(e, line, wantValue) {
+    const S = prog.subs[norm(e.name)];
+    if (!S) throw new AlgoError(`sous-programme « ${e.name} » inconnu`, line);
+    if (wantValue && !S.isF) throw new AlgoError(`${S.name} est une procédure : elle ne rend pas de valeur, elle s'appelle seule sur sa ligne`, line);
+    if (!wantValue && S.isF) throw new AlgoError(`${S.name} est une fonction : sa valeur doit être recueillie (affectation, Afficher, condition)`, line);
+    if (e.args.length !== S.params.length) throw new AlgoError(`${S.name} attend ${S.params.length} paramètre(s), ${e.args.length} donné(s)`, line);
+    const vars = new Map(), notes = [];
+    for (let k = 0; k < S.params.length; k++) {
+      const P = S.params[k], a = e.args[k];
+      if (P.mode === "MODIF") {
+        if (!["var", "idx", "fld"].includes(a.t)) throw new AlgoError(`le paramètre MODIF ${P.name} doit recevoir une variable (un casier), pas une valeur`, line);
+        const lv = yield* lval(a, line);
+        const cell = lv.cell && a.t === "var" ? lv.cell : { get val() { return lv.get(); }, set val(v) { lv.set(v); }, hist: [] };
+        if (!cell.hist) cell.hist = [];
+        vars.set(norm(P.name), { name: P.name, type: P.type, mode: "MODIF", refLabel: lv.label, get hist() { return cell.hist; }, get val() { return cell.val; }, set val(v) { cell.val = v; } });
+        notes.push(`${P.name} (MODIF) reçoit les clés du casier ${lv.label}`);
+      } else {
+        const v = clone(yield* val(a, line));
+        vars.set(norm(P.name), { name: P.name, type: P.type, mode: "FIXE", val: v, hist: [] });
+        notes.push(`${P.name} (FIXE) reçoit une photocopie : ${show(v)}`);
+      }
+    }
+    for (const d of S.locals) vars.set(norm(d.name), { name: d.name, type: d.type, val: make(d.type, d.line), hist: [] });
+    yield ev({ line, kind: "call", msg: `Appel de <b>${S.name}</b> : ${notes.join(" ; ") || "aucun paramètre"}.` });
+    frames.push({ name: S.name, isMain: false, vars, sub: S });
+    yield ev({ line: S.startLine, kind: "instr", msg: `On entre dans ${S.isF ? "la fonction" : "la procédure"} <b>${S.name}</b>.` });
+    const r = yield* block(S.body);
+    let rv;
+    if (S.isF) { if (!r || !r.ret) throw new AlgoError(`la fonction ${S.name} s'est terminée sans retourne(…)`, S.endLine); rv = r.value; }
+    else if (r && r.ret) throw new AlgoError("retourne(…) n'existe que dans une fonction", r.line);
+    yield ev({ line: S.isF ? r.line : S.endLine, kind: "return", value: rv, msg: S.isF ? `${S.name} retourne <b>${show(rv)}</b> ; on revient à l'appelant.` : `Fin de ${S.name} : les paramètres MODIF ont modifié les vrais casiers ; les photocopies FIXE sont jetées.` });
+    frames.pop();
+    return rv;
+  }
+
+  // --- instructions
+  function* block(list) { for (const s of list) { const r = yield* exec(s); if (r && r.ret) return r; } return null; }
+  function* exec(s) {
+    switch (s.t) {
+      case "aff_": {
+        const v = yield* val(s.rhs, s.line); const lv = yield* lval(s.lhs, s.line); const old = lv.get();
+        lv.set(clone(v));
+        return void (yield ev({ line: s.line, kind: "instr", changed: lv.label, value: v, old,
+          msg: `${lv.label} ← ${show(v)}` + (old !== undefined && !isArr(old) && !isRec(old) ? ` (l'ancienne valeur ${show(old)} est écrasée)` : "") }));
+      }
+      case "aff": {
+        const parts = []; for (const a of s.args) parts.push(fmt(yield* val(a, s.line)));
+        const txt = parts.join(""); screen.push(txt);
+        return void (yield ev({ line: s.line, kind: "io", out: txt, msg: `Écran : « ${txt} »` }));
+      }
+      case "sai": {
+        for (const tg of s.targets) {
+          const lv = yield* lval(tg, s.line);
+          if (!queue.length) throw new AlgoError(`Saisir(${lv.label}) : plus aucune valeur à saisir. Ajoutez-en dans le champ « Valeurs saisies ».`, s.line);
+          const raw = queue.shift(); const old = lv.get(); const t = typeOf(tg);
+          let v = raw;
+          if (t === "entier" || t === "réel" || (t === null && /^-?[0-9]+([.,][0-9]+)?$/.test(raw))) { v = Number(raw.replace(",", ".")); if (isNaN(v)) throw new AlgoError(`« ${raw} » n'est pas un nombre`, s.line); }
+          else if (t === "booléen") v = norm(raw) === "vrai";
+          lv.set(v);
+          yield ev({ line: s.line, kind: "instr", changed: lv.label, value: v, old, io: true, msg: `L'utilisateur tape ${raw} : ${lv.label} ← ${show(v)}` });
+        }
+        return;
+      }
+      case "callst": { yield* call(s.e, s.line, false); return; }
+      case "ret": { const v = yield* val(s.e, s.line); return { ret: true, value: v, line: s.line }; }
+      case "si": {
+        const c = yield* val(s.c, s.line); if (typeof c !== "boolean") throw new AlgoError("la condition d'un si doit être vraie ou fausse", s.line);
+        yield ev({ line: s.line, kind: "test", res: c, msg: `Test : ${src(s.line).replace(/^si\s+/i, "").replace(/\s+alors$/i, "")} → <b>${c ? "vrai" : "faux"}</b>` + (c ? " : on exécute le bloc alors." : (s.no ? " : on passe au sinon." : " : rien à faire, on va après le fsi.")) });
+        if (c) return yield* block(s.yes);
+        if (s.no) return yield* block(s.no);
+        return;
+      }
+      case "selon": {
+        const x = yield* val(s.e, s.line);
+        for (const cs of s.cases) {
+          let ok = cs.tests === null;
+          if (!ok) for (const t of cs.tests) {
+            if (t.op === "range") { const a = yield* val(t.a, cs.line), b = yield* val(t.b, cs.line); if (cmp(x, a, cs.line) >= 0 && cmp(x, b, cs.line) <= 0) ok = true; }
+            else { const w = yield* val(t.e, cs.line);
+              const r = { "=": eq(x, w, cs.line), "≠": !eq(x, w, cs.line), "<": cmp(x, w) < 0, ">": cmp(x, w) > 0, "≤": cmp(x, w) <= 0, "≥": cmp(x, w) >= 0 }[t.op]; if (r) ok = true; }
+            if (ok) break;
+          }
+          yield ev({ line: cs.line, kind: "test", res: ok, msg: cs.tests === null ? "Aucun cas précédent ne convenait : cas « autres »." : `Cas « ${cs.label} » pour ${show(x)} ? <b>${ok ? "oui" : "non"}</b>` });
+          if (ok) { const r = yield* block(cs.body); return r; }
+        }
+        return;
+      }
+      case "pour": {
+        const a = yield* val(s.a, s.line), b = yield* val(s.b, s.line), step = s.step ? yield* val(s.step, s.line) : 1;
+        const lv = yield* lval({ t: "var", name: s.v }, s.line); const old = lv.get();
+        lv.set(a); yield ev({ line: s.line, kind: "instr", changed: lv.label, value: a, old, msg: `Initialisation du compteur : ${s.v} ← ${fmt(a)}` });
+        for (;;) {
+          const k = lv.get(); const c = step > 0 ? k <= b : k >= b;
+          yield ev({ line: s.line, kind: "test", res: c, msg: `Test : ${s.v} ${step > 0 ? "≤" : "≥"} ${fmt(b)} ? (${s.v} = ${fmt(k)}) → <b>${c ? "vrai" : "faux"}</b>` });
+          if (!c) break;
+          tours++;
+          const r = yield* block(s.body); if (r && r.ret) return r;
+          const o = lv.get(); lv.set(o + step);
+          yield ev({ line: s.endLine, kind: "instr", changed: lv.label, value: o + step, old: o, msg: `fpour : le compteur avance, ${s.v} ← ${fmt(o + step)}` });
+        }
+        yield ev({ line: s.endLine, kind: "exit", msg: `Sortie de la boucle pour (${s.v} = ${fmt(lv.get())}).` });
+        return;
+      }
+      case "tq": {
+        for (;;) {
+          const c = yield* val(s.c, s.line); if (typeof c !== "boolean") throw new AlgoError("la condition d'un tant que doit être vraie ou fausse", s.line);
+          yield ev({ line: s.line, kind: "test", res: c, msg: `Test : ${src(s.line).replace(/^tant\s*que\s+/i, "").replace(/\s+faire$/i, "")} → <b>${c ? "vrai" : "faux"}</b>${c ? " : on fait un tour." : " : on sort."}` });
+          if (!c) break;
+          tours++;
+          if (tours > 5000) throw new AlgoError("plus de 5000 tours : boucle infinie ? Vérifiez la relance.", s.line);
+          const r = yield* block(s.body); if (r && r.ret) return r;
+        }
+        yield ev({ line: s.endLine, kind: "exit", msg: "Sortie de la boucle tant que." });
+        return;
+      }
+      case "rep": {
+        for (;;) {
+          tours++;
+          if (tours > 5000) throw new AlgoError("plus de 5000 tours : boucle infinie ?", s.line);
+          const r = yield* block(s.body); if (r && r.ret) return r;
+          const c = yield* val(s.c, s.endLine); if (typeof c !== "boolean") throw new AlgoError("la condition de jusqu'à doit être vraie ou fausse", s.endLine);
+          yield ev({ line: s.endLine, kind: "test", res: c, msg: `Test : ${src(s.endLine).replace(/^jusqu['’]?\s*(à|a|au)?\s+/i, "")} → <b>${c ? "vrai : on s'arrête" : "faux : on recommence"}</b>` });
+          if (c) break;
+        }
+        yield ev({ line: s.endLine, kind: "exit", msg: "Sortie de la boucle répéter." });
+        return;
+      }
+    }
+  }
+  function typeOf(e) {   // type déclaré d'une lvalue (pour convertir la saisie)
+    try {
+      if (e.t === "var") { const c = cellOf(e.name, 0); return c.type ? (c.type.base || null) : null; }
+      if (e.t === "idx") { const b = e.a; if (b.t === "var") { const c = cellOf(b.name, 0); return c.type && c.type.arr ? (c.type.elem.base || null) : null; } return null; }
+      if (e.t === "fld") { let b = e.a; let recName = null;
+        if (b.t === "var") { const c = cellOf(b.name, 0); recName = c.val && c.val.type; }
+        else if (b.t === "idx" && b.a.t === "var") { const c = cellOf(b.a.name, 0); recName = c.val && c.val.cells && c.val.cells[0] && c.val.cells[0].type; }
+        const T = recName && prog.types[norm(recName)]; if (!T) return null; const f = T.fields.find(x => norm(x.name) === norm(e.f)); return f && f.type.base || null; }
+    } catch (_) { return null; }
+    return null;
+  }
+
+  // --- programme principal
+  const M = prog.main, vars = new Map();
+  for (const d of M.locals) vars.set(norm(d.name), { name: d.name, type: d.type, val: make(d.type, d.line), hist: [] });
+  frames.push({ name: M.name, isMain: true, vars });
+  yield ev({ line: M.startLine, kind: "instr", msg: `Début de l'algorithme <b>${M.name}</b> : les casiers sont réservés, encore vides (?).` });
+  yield* block(M.body);
+  yield ev({ line: M.endLine, kind: "end", done: true, msg: "Fin de l'algorithme." });
+}
+
+return { parseProgram, run, fmt, show, AlgoError, norm, isArr, isRec };
+})();
+if (typeof module !== "undefined") module.exports = ALGO;
+
+// Exemples de référence des CM (mêmes conventions que les pages Moodle)
+const EXEMPLES = [
+// ------------------------------------------------------------------ CM1
+{ id: "cm1_carre", cm: "CM1 — Variables et affectation", titre: "ElèveAuCarré (saisie, calcul, affichage)", entrees: "7",
+  desc: "Les 4 parties d'un algorithme : déclarations, préparation (saisie), traitement, sortie.",
+  code: `Algorithme ElèveAuCarré
+{Cet algorithme calcule le carré du nombre fourni par l'utilisateur}
+Variables unNombre, sonCarré : entiers
+Début
+    {préparation du traitement}
+    Afficher("Quel nombre voulez-vous élever au carré ?")
+    Saisir(unNombre)
+    {traitement}
+    sonCarré ← unNombre × unNombre
+    {présentation du résultat}
+    Afficher("Le carré de ", unNombre, " c'est ", sonCarré)
+Fin` },
+{ id: "cm1_ecrasement", cm: "CM1 — Variables et affectation", titre: "Trace n°1 — l'écrasement", entrees: "",
+  desc: "Pourquoi b ne vaut-il pas 15 à la fin ? Regardez l'ancienne valeur de a barrée dans son casier.",
+  code: `Algorithme Ecrasement
+Variables a, b : entiers
+Début
+    a ← 4
+    b ← a + 6
+    a ← 9
+    Afficher("a = ", a, " et b = ", b)
+Fin` },
+{ id: "cm1_echange_rate", cm: "CM1 — Variables et affectation", titre: "Échange raté (sans variable temporaire)", entrees: "",
+  desc: "On veut échanger A et B. Que se passe-t-il sans casier de secours ?",
+  code: `Algorithme EchangeRate
+Variables A, B : entiers
+Début
+    A ← 3
+    B ← 8
+    A ← B
+    B ← A
+    Afficher("A = ", A, " et B = ", B)
+Fin` },
+{ id: "cm1_echange", cm: "CM1 — Variables et affectation", titre: "Échange avec variable temporaire", entrees: "",
+  desc: "On sauvegarde avant d'écraser : temp sert d'abri.",
+  code: `Algorithme Echange
+Variables A, B, temp : entiers
+Début
+    A ← 3
+    B ← 8
+    temp ← A        {on met A à l'abri}
+    A ← B
+    B ← temp
+    Afficher("A = ", A, " et B = ", B)
+Fin` },
+// ------------------------------------------------------------------ CM2
+{ id: "cm2_imc1", cm: "CM2 — Conditionnelles", titre: "IMC étape 1 — normal ou anormal (si … ET …)", entrees: "1.75 ; 70",
+  desc: "Une seule alternative si … sinon, avec une condition composée par ET.",
+  code: `Algorithme ImcNormal
+{Étape 1 : l'IMC est-il normal ?}
+Variables taille, poids, imc : réels
+Début
+    Afficher("Votre taille (m) ? ")
+    Saisir(taille)
+    Afficher("Votre poids (kg) ? ")
+    Saisir(poids)
+    imc ← poids / (taille × taille)
+    si imc ≥ 18.5 ET imc < 25 alors
+        Afficher("Votre IMC est Normal")
+    sinon
+        Afficher("Votre IMC est Anormal")
+    fsi
+Fin` },
+{ id: "cm2_imc2", cm: "CM2 — Conditionnelles", titre: "IMC étape 2 — classification OMS (si imbriqués)", entrees: "1.75 ; 80",
+  desc: "Un nouveau si dans chaque sinon, chacun avec son fsi. Testez aussi le cas limite IMC = 25.",
+  code: `Algorithme ImcOMS
+{Étape 2 : classification OMS en quatre catégories}
+Variables taille, poids, imc : réels
+Début
+    Afficher("Votre taille (m) ? ")
+    Saisir(taille)
+    Afficher("Votre poids (kg) ? ")
+    Saisir(poids)
+    imc ← poids / (taille × taille)
+    si imc < 18.5 alors
+        Afficher("Résultat : Maigreur")
+    sinon
+        si imc < 25 alors
+            Afficher("Résultat : Corpulence normale")
+        sinon
+            si imc < 30 alors
+                Afficher("Résultat : Surpoids")
+            sinon
+                Afficher("Résultat : Obésité")
+            fsi
+        fsi
+    fsi
+Fin` },
+{ id: "cm2_imc3", cm: "CM2 — Conditionnelles", titre: "IMC étape 3 — classification détaillée (selon sur intervalles)", entrees: "1.72 ; 100.9",
+  desc: "Une seule variable comparée à des intervalles : selon. Le premier cas vrai l'emporte.",
+  code: `Algorithme ImcDetaille
+{Étape 3 : classification détaillée}
+Variables taille, poids, imc : réels
+Début
+    Afficher("Votre taille (m) ? ")
+    Saisir(taille)
+    Afficher("Votre poids (kg) ? ")
+    Saisir(poids)
+    imc ← poids / (taille × taille)
+    selon imc
+        < 16.5 : Afficher("Résultat : Dénutrition")
+        < 18.5 : Afficher("Résultat : Maigreur")
+        < 25 : Afficher("Résultat : Corpulence normale")
+        < 30 : Afficher("Résultat : Surpoids")
+        < 35 : Afficher("Résultat : Obésité de classe I")
+        < 40 : Afficher("Résultat : Obésité de classe II")
+        autres : Afficher("Résultat : Obésité de classe III")
+    finselon
+Fin` },
+{ id: "cm2_mois", cm: "CM2 — Conditionnelles", titre: "selon sur des valeurs — les jours du mois", entrees: "4",
+  desc: "Une variable comparée à des valeurs précises ; le cas « autres » attrape la donnée invalide.",
+  code: `Algorithme JoursDuMois
+{Affiche le nombre de jours du mois saisi (1-12), hors années bissextiles}
+Variables mois : entier
+Début
+    Afficher("Numéro du mois (1-12) ? ")
+    Saisir(mois)
+    selon mois
+        1, 3, 5, 7, 8, 10, 12 : Afficher("31 jours")
+        4, 6, 9, 11 : Afficher("30 jours")
+        2 : Afficher("28 jours")
+        autres : Afficher("Mois invalide !")
+    finselon
+Fin` },
+// ------------------------------------------------------------------ CM3
+{ id: "cm3_crepes", cm: "CM3 — Boucles", titre: "tant que — tant qu'il reste de la pâte", entrees: "",
+  desc: "Amorçage, test, relance. Que se passe-t-il si on oublie la ligne pâte ← pâte - 2 ?",
+  code: `Algorithme Crêpes
+{Tant qu'il reste de la pâte, on fait une crêpe}
+Variables pâte, nbCrêpes : entiers
+Début
+    pâte ← 8                       {amorçage : 8 louches dans le saladier}
+    nbCrêpes ← 0
+    tant que pâte > 0 faire
+        nbCrêpes ← nbCrêpes + 1
+        pâte ← pâte - 2            {relance : chaque crêpe consomme 2 louches}
+    ftq
+    Afficher(nbCrêpes, " crêpes")
+Fin` },
+{ id: "cm3_age", cm: "CM3 — Boucles", titre: "répéter … jusqu'à — saisie contrôlée", entrees: "-5 ; 150 ; 19",
+  desc: "Le test est APRÈS le corps : au moins un tour. On s'arrête quand la condition devient vraie.",
+  code: `Algorithme SaisieAge
+Variables age : entier
+Début
+    répéter
+        Afficher("Votre âge (0 à 120) ? ")
+        Saisir(age)
+    jusqu'à age ≥ 0 ET age ≤ 120
+    Afficher("Âge enregistré : ", age)
+Fin` },
+{ id: "cm3_oeufs", cm: "CM3 — Boucles", titre: "pour — casser les 6 œufs", entrees: "",
+  desc: "Nombre de tours connu : le compteur avance tout seul à chaque fpour.",
+  code: `Algorithme Oeufs
+Variables k : entier
+Début
+    pour k ← 1 à 6 faire
+        Afficher("Je casse l'œuf n°", k)
+    fpour
+    Afficher("La pâte est prête")
+Fin` },
+{ id: "cm3_tirelire", cm: "CM3 — Boucles", titre: "Accumulation — la tirelire", entrees: "12 ; 15 ; 9 ; 14",
+  desc: "somme ← 0 AVANT la boucle, somme ← somme + note DEDANS.",
+  code: `Algorithme SommeDeNotes
+Variables k : entier
+          note, somme : réels
+Début
+    somme ← 0
+    pour k ← 1 à 4 faire
+        Afficher("Note n°", k, " ? ")
+        Saisir(note)
+        somme ← somme + note
+    fpour
+    Afficher("Moyenne : ", somme / 4)
+Fin` },
+// ------------------------------------------------------------------ CM4
+{ id: "cm4_fixe", cm: "CM4 — Procédures et fonctions", titre: "FIXE = photocopie", entrees: "",
+  desc: "Doubler reçoit une photocopie de a : le vrai casier a ne bouge pas.",
+  code: `Procédure Doubler (FIXE x : entier)
+{Rôle : double x | Paramètres : x (FIXE, entier) : la valeur à doubler}
+Début
+    x ← x × 2
+FinProcédure
+
+Algorithme TestFixe
+Variables a : entier
+Début
+    a ← 5
+    Doubler(a)
+    Afficher("a vaut ", a)
+Fin` },
+{ id: "cm4_modif", cm: "CM4 — Procédures et fonctions", titre: "MODIF = les clés du casier", entrees: "",
+  desc: "Même programme, mais x est MODIF : la procédure écrit dans le vrai casier a.",
+  code: `Procédure Doubler (MODIF x : entier)
+{Rôle : double x | Paramètres : x (MODIF, entier) : la valeur à doubler}
+Début
+    x ← x × 2
+FinProcédure
+
+Algorithme TestModif
+Variables a : entier
+Début
+    a ← 5
+    Doubler(a)
+    Afficher("a vaut ", a)
+Fin` },
+{ id: "cm4_maximum", cm: "CM4 — Procédures et fonctions", titre: "Fonction — le presse-agrumes", entrees: "14 ; 9",
+  desc: "Un seul résultat, rendu par retourne et recueilli par l'appelant.",
+  code: `Fonction Maximum2 (FIXE a : entier, FIXE b : entier) : entier
+{Rôle : retourne le plus grand de a et b | Paramètres : a, b (FIXE, entier) : les deux valeurs}
+Variables m : entier
+Début
+    si a > b alors
+        m ← a
+    sinon
+        m ← b
+    fsi
+    retourne(m)
+FinFonction
+
+Algorithme PlusGrand
+Variables x, y, grand : entiers
+Début
+    Afficher("Deux nombres ? ")
+    Saisir(x)
+    Saisir(y)
+    grand ← Maximum2(x, y)
+    Afficher("Le plus grand est ", grand)
+Fin` },
+{ id: "cm4_echanger", cm: "CM4 — Procédures et fonctions", titre: "Procédure à deux MODIF — Échanger", entrees: "",
+  desc: "L'échange du CM1 devient une sous-recette réutilisable.",
+  code: `Procédure Echanger (MODIF u : entier, MODIF v : entier)
+{Rôle : échange les valeurs de u et v | Paramètres : u, v (MODIF, entier) : les deux casiers}
+Variables temp : entier
+Début
+    temp ← u
+    u ← v
+    v ← temp
+FinProcédure
+
+Algorithme TestEchange
+Variables A, B : entiers
+Début
+    A ← 3
+    B ← 8
+    Echanger(A, B)
+    Afficher("A = ", A, " et B = ", B)
+Fin` },
+// ------------------------------------------------------------------ CM5
+{ id: "cm5_meteo", cm: "CM5 — Tableaux", titre: "Météo — Remplir, Moyenne, Maximum", entrees: "12.5 ; 14 ; 9.5 ; 16 ; 11",
+  desc: "On saisit une seule fois ; Remplir écrit (MODIF), Moyenne et Maximum lisent (FIXE).",
+  code: `Procédure Remplir (MODIF T : tableau de réels, FIXE nb : entier)
+{Rôle : saisit les nb valeurs du tableau | Paramètres : T (MODIF, tableau de réels) : à remplir ;
+ nb (FIXE, entier) : nombre de cases à remplir}
+Variables k : entier
+Début
+    pour k ← 1 à nb faire
+        Afficher("Valeur n°", k, " : ")
+        Saisir(T[k])
+    fpour
+FinProcédure
+
+Fonction Moyenne (FIXE T : tableau de réels, FIXE nb : entier) : réel
+{Rôle : retourne la moyenne des nb premières cases | Paramètres : T (FIXE) : lu ; nb (FIXE) : nombre d'éléments}
+Variables k : entier
+          somme : réel
+Début
+    somme ← 0
+    pour k ← 1 à nb faire
+        somme ← somme + T[k]
+    fpour
+    retourne(somme / nb)
+FinFonction
+
+Fonction Maximum (FIXE T : tableau de réels, FIXE nb : entier) : réel
+{Rôle : retourne la plus grande des nb premières cases | Paramètres : T (FIXE) : lu ; nb (FIXE) : nombre d'éléments}
+Variables k : entier
+          maxi : réel
+Début
+    maxi ← T[1]
+    pour k ← 2 à nb faire
+        si T[k] > maxi alors
+            maxi ← T[k]
+        fsi
+    fpour
+    retourne(maxi)
+FinFonction
+
+Algorithme MeteoSemaine
+Variables Température[10] : réels
+          nbJours : entier
+Début
+    nbJours ← 5
+    Remplir(Température, nbJours)
+    Afficher("Moyenne : ", Moyenne(Température, nbJours))
+    Afficher("Maximum : ", Maximum(Température, nbJours))
+Fin` },
+{ id: "cm5_debord", cm: "CM5 — Tableaux", titre: "Piège — l'indice hors bornes", entrees: "",
+  desc: "Que se passe-t-il quand k dépasse la taille du tableau ?",
+  code: `Algorithme Debordement
+Variables T[5] : entiers
+          k : entier
+Début
+    pour k ← 1 à 5 faire
+        T[k] ← k × 10
+    fpour
+    k ← 2
+    Afficher(T[k + 1])
+    Afficher(T[k + 4])
+Fin` },
+// ------------------------------------------------------------------ CM6
+{ id: "cm6_videotheque", cm: "CM6 — Enregistrements", titre: "Ma vidéothèque — fiches et classeur", entrees: "Orbite ; 2019 ; 148 ; 4.5 ; Le Phare ; 2022 ; 120 ; 3.5 ; Minuit ; 2023 ; 88 ; 2.5",
+  desc: "La fiche k, puis le compartiment : V[k].duree. SaisirFilm reçoit la fiche en MODIF.",
+  code: `Type Film = enregistrement
+    titre : chaîne
+    annee : entier
+    duree : entier      {en minutes}
+    note : réel
+FinEnregistrement
+
+Procédure SaisirFilm (MODIF f : Film)
+{Rôle : remplit les quatre champs d'une fiche | Paramètres : f (MODIF, Film) : la fiche à remplir}
+Début
+    Afficher("Titre ? ")
+    Saisir(f.titre)
+    Afficher("Année ? ")
+    Saisir(f.annee)
+    Afficher("Durée (min) ? ")
+    Saisir(f.duree)
+    Afficher("Note ? ")
+    Saisir(f.note)
+FinProcédure
+
+Fonction EstLong (FIXE f : Film) : booléen
+{Rôle : vrai si le film dure au moins 120 minutes | Paramètres : f (FIXE, Film) : la fiche lue}
+Début
+    retourne(f.duree ≥ 120)
+FinFonction
+
+Fonction MeilleurFilm (FIXE V : tableau de Film, FIXE nb : entier) : entier
+{Rôle : position du film le mieux noté (le premier en cas d'égalité) | Paramètres : V (FIXE) : le classeur ; nb (FIXE) : nombre de fiches}
+Variables k, pos : entiers
+Début
+    pos ← 1
+    pour k ← 2 à nb faire
+        si V[k].note > V[pos].note alors
+            pos ← k
+        fsi
+    fpour
+    retourne(pos)
+FinFonction
+
+Algorithme Videotheque
+Constante CAPA = 4
+Variables V[CAPA] : Film
+          nb, k, nbLongs, p : entiers
+Début
+    nb ← 3
+    pour k ← 1 à nb faire
+        SaisirFilm(V[k])
+    fpour
+    nbLongs ← 0
+    pour k ← 1 à nb faire
+        si EstLong(V[k]) alors
+            nbLongs ← nbLongs + 1
+        fsi
+    fpour
+    p ← MeilleurFilm(V, nb)
+    Afficher(nbLongs, " films longs ; meilleur : ", V[p].titre)
+Fin` },
+// ------------------------------------------------------------------ CM7
+{ id: "cm7_position", cm: "CM7 — Recherche", titre: "Recherche séquentielle — Position", entrees: "",
+  desc: "On s'arrête dès qu'on trouve : tant que à deux conditions, pos joue le drapeau.",
+  code: `Fonction Position (FIXE T : tableau d'entiers, FIXE nb : entier, FIXE x : entier) : entier
+{Rôle : position de la première case qui contient x, 0 si absent}
+Variables i, pos : entiers
+Début
+    pos ← 0
+    i ← 1
+    tant que i ≤ nb ET pos = 0 faire
+        si T[i] = x alors
+            pos ← i
+        fsi
+        i ← i + 1
+    ftq
+    retourne(pos)
+FinFonction
+
+Algorithme Pilulier
+Variables T[6] : entiers
+          p : entier
+Début
+    T[1] ← 12
+    T[2] ← 7
+    T[3] ← 25
+    T[4] ← 7
+    T[5] ← 18
+    T[6] ← 3
+    p ← Position(T, 6, 18)
+    Afficher("18 est en case ", p)
+Fin` },
+{ id: "cm7_dicho", cm: "CM7 — Recherche", titre: "Recherche dichotomique", entrees: "52",
+  desc: "Zone [g, d], milieu m ← (g + d) div 2 : chaque tour élimine la moitié.",
+  code: `Fonction Dichotomie (FIXE T : tableau d'entiers, FIXE nb : entier, FIXE x : entier) : entier
+{Rôle : position de x dans T TRIÉ, 0 si absent}
+Variables g, d, m, pos : entiers
+Début
+    pos ← 0
+    g ← 1
+    d ← nb
+    tant que g ≤ d ET pos = 0 faire
+        m ← (g + d) div 2
+        si T[m] = x alors
+            pos ← m
+        sinon
+            si T[m] < x alors
+                g ← m + 1
+            sinon
+                d ← m - 1
+            fsi
+        fsi
+    ftq
+    retourne(pos)
+FinFonction
+
+Algorithme Recherche
+Variables T[15] : entiers
+          k, x : entiers
+Début
+    pour k ← 1 à 15 faire
+        T[k] ← k × 5 + 2
+    fpour
+    Afficher("Valeur cherchée ? ")
+    Saisir(x)
+    Afficher("Position : ", Dichotomie(T, 15, x))
+Fin` },
+];
+if (typeof module !== "undefined") module.exports = EXEMPLES;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+let prog = null, gen = null, finished = false, pending = null, qok = 0, qko = 0, tries = 0;
+let prevSnap = null, cols = [], rows = 0, curCode = "", curEx = null;
+const U = new URLSearchParams(location.search);
+
+// ---------- liste des exemples (filtrable par ?cm=3)
+function fillSelect() {
+  const only = U.get("cm"); const sel = $("ex"); sel.innerHTML = ""; const groups = {};
+  for (const e of EXEMPLES) { if (only && !e.cm.startsWith("CM" + only + " ")) continue;
+    if (!groups[e.cm]) { groups[e.cm] = document.createElement("optgroup"); groups[e.cm].label = e.cm; sel.appendChild(groups[e.cm]); }
+    const o = document.createElement("option"); o.value = e.id; o.textContent = e.titre; groups[e.cm].appendChild(o); }
+  const og = document.createElement("optgroup"); og.label = "Votre algorithme"; const o = document.createElement("option"); o.value = "perso"; o.textContent = "✏️ Mon algorithme"; og.appendChild(o); sel.appendChild(og);
+}
+function choose(id, keepInputs) {
+  curEx = EXEMPLES.find(e => e.id === id) || null;
+  if (curEx) { curCode = curEx.code; if (!keepInputs) $("inputs").value = curEx.entrees; $("desc").textContent = curEx.desc; $("editor").style.display = "none"; }
+  else { $("desc").textContent = "Collez votre algorithme ci-dessous, indiquez les valeurs à saisir, puis « Charger »."; $("editor").style.display = "block";
+         if (!curCode) curCode = "Algorithme MonAlgo\nVariables a : entier\nDébut\n    a ← 1\n    Afficher(a)\nFin"; $("src").value = curCode; }
+  reset();
+}
+
+// ---------- affichage du code
+function drawCode(line, kind) {
+  const L = curCode.split("\n");
+  $("code").innerHTML = L.map((l, k) => {
+    const h = esc(l).replace(/(\{[^}]*\}?)/g, '<span class="cm">$1</span>');
+    return `<div id="L${k + 1}" class="${line === k + 1 ? kind : ""}"><span class="ln">${k + 1}</span>${h || " "}</div>`; }).join("");
+  if (line) { const el = $("L" + line); if (el) { const box = $("code"); const top = el.offsetTop - box.offsetTop; if (top < box.scrollTop || top > box.scrollTop + box.clientHeight - 40) box.scrollTop = top - 120; } }
+}
+
+// ---------- mémoire
+function valHtml(v, type) {
+  if (ALGO.isArr(v)) {
+    if (v.cells.length && ALGO.isRec(v.cells[0])) return '<div>' + v.cells.map((f, k) => ficheHtml(f, `[${k + 1}]`)).join("") + '</div>';
+    return '<span class="arr">' + v.cells.map((c, k) => `<span class="c"><div class="i">${k + 1}</div><div class="v">${c === undefined ? "?" : esc(ALGO.fmt(c))}</div></span>`).join("") + '</span>';
+  }
+  if (ALGO.isRec(v)) return ficheHtml(v, "");
+  return esc(v === undefined ? "?" : ALGO.show(v));
+}
+function ficheHtml(f, lab) {
+  return `<span class="fiche"><div class="fh">${lab} fiche ${esc(f.type)}</div>` +
+    f.order.map(k => `<div class="f">${esc(k)} : <b>${esc(ALGO.show(f.fields[ALGO.norm(k)]))}</b></div>`).join("") + '</span>';
+}
+function drawMem(ev) {
+  if (!ev) { $("mem").innerHTML = '<span class="hint">Les casiers apparaissent au début de l\'algorithme.</span>'; return; }
+  const top = ev.frames.length - 1;
+  $("mem").innerHTML = ev.frames.map((f, fi) => {
+    const title = f.isMain ? `Algorithme ${esc(f.name)}` : `${esc(f.name)} — appel en cours`;
+    const cas = f.vars.map(v => {
+      const root = ev.changed ? ALGO.norm(ev.changed.split(/[\[.]/)[0]) : null;
+      const chg = fi === top && root === ALGO.norm(v.name);
+      const big = ALGO.isArr(v.val) || ALGO.isRec(v.val);
+      const md = v.mode === "MODIF" ? `<div class="md">MODIF → clés de ${esc(v.ref)}</div>` : v.mode === "FIXE" ? '<div class="md">FIXE : photocopie</div>' : "";
+      const old = !big && v.hist.length ? `<div class="old">${v.hist.map(h => esc(ALGO.show(h))).join(" ")}</div>` : "";
+      return `<div class="casier ${chg ? "chg" : ""} ${v.val === undefined ? "empty" : ""}" style="${big ? "min-width:100%;" : ""}"><div class="nm">${esc(v.name)}</div>${old}<div class="vl">${valHtml(v.val)}</div>${md}</div>`;
+    }).join("");
+    return `<div class="frame ${f.isMain ? "" : "sub"}"><div class="ft">${title}</div><div class="casiers">${cas || '<span class="hint">aucune variable</span>'}</div></div>`;
+  }).join("");
+}
+
+// ---------- tableau de trace
+function scalarCols(ev) { const out = [];
+  ev.frames.forEach(f => f.vars.forEach(v => { if (!ALGO.isArr(v.val) && !ALGO.isRec(v.val)) out.push((f.isMain ? "" : f.name + ".") + v.name); })); return out; }
+function addTraceRow(ev) {
+  for (const c of scalarCols(ev)) if (!cols.includes(c)) cols.push(c);
+  const vals = {}; ev.frames.forEach(f => f.vars.forEach(v => { if (!ALGO.isArr(v.val) && !ALGO.isRec(v.val)) vals[(f.isMain ? "" : f.name + ".") + v.name] = v.val; }));
+  const top = ev.frames[ev.frames.length - 1]; const root = ev.changed ? ALGO.norm(ev.changed.split(/[\[.]/)[0]) : null;
+  rows++;
+  const act = ev.kind === "test" ? `test : ${ev.res ? "vrai" : "faux"}` : ev.kind === "exit" ? "sortie de boucle" : ev.kind === "io" ? `écran : ${esc(ev.out)}` :
+    ev.kind === "call" ? "appel" : ev.kind === "return" ? (ev.value !== undefined ? `retourne ${esc(ALGO.show(ev.value))}` : "retour") :
+    ev.changed ? `${esc(ev.changed)} ← ${esc(ALGO.show(ev.value))}` : ev.kind === "end" ? "fin" : "début";
+  const head = `<tr><th>pas</th><th>ligne</th><th>action</th>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr>`;
+  const t = $("trace"); const old = t.querySelectorAll("tr.r");
+  const body = [...old].map(r => r.outerHTML.replace(/<\/tr>$/, "<td></td>".repeat(Math.max(0, cols.length + 3 - r.children.length)) + "</tr>")).join("");
+  const row = `<tr class="r ${ev.kind}"><td>${rows}</td><td>${ev.line}</td><td class="act">${act}</td>` + cols.map(c => {
+    const isTop = c.startsWith(top.isMain ? "" : top.name + ".") && (top.isMain ? !c.includes(".") : true);
+    const chg = root && isTop && ALGO.norm(c.split(".").pop()) === root;
+    return `<td class="${chg ? "chg" : ""}">${c in vals ? esc(vals[c] === undefined ? "?" : ALGO.show(vals[c])) : ""}</td>`; }).join("") + "</tr>";
+  t.innerHTML = head + body + row; const box = t.parentElement; box.scrollTop = box.scrollHeight;
+}
+
+// ---------- prédiction
+function questionFor(ev) {
+  if (ev.error || ev.done) return null;
+  const scalar = (v) => typeof v === "number" || typeof v === "boolean" || typeof v === "string";
+  if (ev.kind === "test") return { type: "bool", ans: ev.res, text: "Le test de la ligne encadrée est-il <b>vrai</b> ou <b>faux</b> ?" };
+  if (ev.kind === "instr" && ev.changed && !ev.io && scalar(ev.value)) return { type: "val", ans: ev.value, key: ev.changed, text: `Après la ligne encadrée, que vaut <b>${esc(ev.changed)}</b> ?` };
+  if (ev.kind === "return" && ev.value !== undefined && scalar(ev.value)) return { type: "val", ans: ev.value, key: "retour", text: "Quelle valeur la fonction <b>retourne</b>-t-elle ?" };
+  return null;
+}
+function same(user, ans) {
+  const u = user.trim().replace(/^["«]\s*|\s*["»]$/g, "");
+  if (typeof ans === "number") { const x = Number(u.replace(",", ".")); return !isNaN(x) && Math.abs(x - ans) < 0.01; }
+  if (typeof ans === "boolean") return ALGO.norm(u) === (ans ? "vrai" : "faux");
+  return ALGO.norm(u) === ALGO.norm(ans);
+}
+function ask(q, ev) {
+  drawCode(ev.line, "pending");
+  $("qbox").style.display = "block"; $("qtext").innerHTML = q.text; $("qfb").innerHTML = ""; tries = 0;
+  $("qinput").innerHTML = q.type === "bool" ? '<button id="qv">Vrai</button><button id="qf">Faux</button>' : '<input id="qn" type="text" autocomplete="off"> <button id="qgo">Valider</button>';
+  const check = (ok) => {
+    if (ok) { qok++; $("qok").textContent = qok; $("qfb").innerHTML = "✅ Oui."; pending = null; $("qinput").innerHTML = ""; show(ev); if (!finished) setTimeout(step, 400); return; }
+    qko++; tries++; $("qko").textContent = qko;
+    if (tries >= 2) { $("qfb").innerHTML = `❌ La réponse était <b>${esc(q.type === "bool" ? (q.ans ? "vrai" : "faux") : ALGO.show(q.ans))}</b>. Lisez l'explication ci-dessous.`;
+      pending = null; $("qinput").innerHTML = ""; show(ev); return; }
+    $("qfb").innerHTML = "❌ Non. " + (q.type === "bool" ? "Calculez chaque partie de la condition avec les valeurs actuelles des casiers." :
+      q.key === "retour" ? "Évaluez l'expression entre les parenthèses de retourne." : "Calculez l'expression à droite de ← avec les valeurs actuelles des casiers.") + " Réessayez.";
+  };
+  if (q.type === "bool") { $("qv").onclick = () => check(q.ans === true); $("qf").onclick = () => check(q.ans === false); }
+  else { const go = () => { const t = $("qn").value; if (t.trim() !== "") check(same(t, q.ans)); }; $("qgo").onclick = go;
+         $("qn").onkeydown = (e) => { if (e.key === "Enter") go(); }; $("qn").focus(); }
+}
+
+// ---------- moteur d'affichage
+function show(ev) {
+  drawCode(ev.line, ev.kind); drawMem(ev); addTraceRow(ev);
+  $("screen").textContent = ev.screen.join("\n"); $("screen").scrollTop = 1e6;
+  $("msg").className = "msg"; $("msg").innerHTML = ev.msg;
+  if (ev.done) end(`🏁 ${ev.msg}`);
+}
+function end(txt) { finished = true; $("step").disabled = $("run").disabled = true;
+  if ($("predict").checked) $("qfb").innerHTML = `🏁 Trace terminée : <b>${qok}</b> prédiction(s) juste(s), <b>${qko}</b> erreur(s).`; }
+function fail(e) {
+  const line = e.line || 0; drawCode(line, "error");
+  $("msg").className = "msg error"; $("msg").innerHTML = `❌ Ligne ${line} : ${esc(e.message)}`;
+  finished = true; $("step").disabled = $("run").disabled = true;
+}
+function step() {
+  if (finished || pending || !gen) return;
+  let r; try { r = gen.next(); } catch (e) { fail(e); return; }
+  if (r.done) { end(""); return; }
+  const ev = r.value;
+  if ($("predict").checked) { const q = questionFor(ev); if (q) { pending = ev; ask(q, ev); return; } }
+  show(ev);
+}
+function runAll() { if ($("predict").checked) return; let k = 0; while (!finished && k++ < 20000) step(); }
+function reset() {
+  finished = false; pending = null; qok = qko = 0; cols = []; rows = 0; prevSnap = null;
+  $("qok").textContent = "0"; $("qko").textContent = "0"; $("trace").innerHTML = ""; $("screen").textContent = ""; drawMem(null);
+  $("qbox").style.display = $("predict").checked ? "block" : "none"; $("qinput").innerHTML = ""; $("qfb").innerHTML = "";
+  $("qtext").innerHTML = "À chaque test et à chaque affectation, vous prédisez avant de voir.";
+  $("step").disabled = false; $("run").disabled = $("predict").checked;
+  $("msg").className = "msg"; $("msg").innerHTML = "Cliquez sur « Pas suivant ».";
+  drawCode(0, "");
+  try { prog = ALGO.parseProgram(curCode); const inputs = $("inputs").value.split(";").map(s => s.trim()).filter(s => s !== ""); gen = ALGO.run(prog, inputs); }
+  catch (e) { gen = null; fail(e); }
+}
+
+// ---------- événements
+$("ex").addEventListener("change", () => choose($("ex").value));
+$("inputs").addEventListener("change", reset);
+$("predict").addEventListener("change", reset);
+$("step").onclick = step; $("run").onclick = runAll; $("reset").onclick = reset;
+$("edit").onclick = () => { $("editor").style.display = "block"; $("src").value = curCode; };
+$("load").onclick = () => { curCode = $("src").value; $("ex").value = "perso"; $("desc").textContent = "Votre algorithme."; $("editor").style.display = "none"; reset(); };
+
+fillSelect();
+if (U.get("predict") === "1") $("predict").checked = true;
+const start = U.get("ex") && EXEMPLES.some(e => e.id === U.get("ex")) ? U.get("ex") : $("ex").options[0].value;
+$("ex").value = start; choose(start);
+if (U.get("in") !== null) { $("inputs").value = U.get("in"); reset(); }
+</script>
+</body>
+</html>
