@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur — Recherche dans un tableau (CM7)</title>
+<style>
+  :root { --c1:#4a2c7a; --c1bg:#f3eefa; --blue:#2563eb; --bluebg:#dbeafe; --green:#1e7b34; --greenbg:#d1f5d8;
+          --yel:#c9a800; --yelbg:#fff1a8; --red:#c0392b; --redbg:#fde2dd; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Helvetica,Arial,sans-serif; color:#222; background:#fff; font-size:15px; }
+  .wrap { max-width:1000px; margin:0 auto; padding:12px 14px 30px; }
+  h1 { font-size:20px; color:#fff; background:var(--c1); margin:0 0 12px; padding:12px 16px; border-radius:8px; }
+  h1 small { display:block; font-size:12.5px; font-weight:normal; opacity:.85; margin-top:3px; }
+  .bar { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:flex-end; background:var(--c1bg); border-radius:8px; padding:10px 12px; }
+  .bar label { font-size:12.5px; color:#444; display:flex; flex-direction:column; gap:3px; }
+  select, input { font-size:14px; padding:5px 7px; border:1px solid #b9a6dd; border-radius:5px; }
+  input#tab { width:300px; } input#x { width:70px; }
+  .btns { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  button { font-size:14px; padding:7px 13px; border-radius:6px; border:1px solid var(--c1); background:#fff; color:var(--c1); cursor:pointer; }
+  button.main { background:var(--c1); color:#fff; }
+  button:disabled { opacity:.4; cursor:default; }
+  .warn { background:#fff8e6; border-left:4px solid #b8860b; padding:6px 10px; font-size:13.5px; margin:8px 0; display:none; }
+  .cells { display:flex; gap:5px; flex-wrap:wrap; margin:6px 0 2px; }
+  .cell { width:48px; text-align:center; }
+  .cell .ix { font-size:11px; color:#777; }
+  .cell .v { height:42px; line-height:38px; border:2px solid #9b8bb8; border-radius:7px; font-weight:bold; font-size:17px; background:#fff; transition:all .2s; }
+  .cell .mk { font-size:11.5px; font-weight:bold; color:var(--c1); height:15px; }
+  .v.cur { background:var(--bluebg); border-color:var(--blue); color:#0b3a8f; }
+  .v.seen { background:#eee; border-color:#bbb; color:#888; }
+  .v.found { background:var(--greenbg); border-color:var(--green); color:#14532d; }
+  .v.out { background:#e9e9e9; border-color:#d0d0d0; color:#aaa; opacity:.45; }
+  .v.mid { background:var(--yelbg); border-color:var(--yel); color:#5c4700; }
+  .v.stop { background:var(--redbg); border-color:var(--red); color:#8a1f12; }
+  .v.ghost { border-style:dashed; color:var(--red); background:#fff; }
+  .grid { display:grid; grid-template-columns: 1.25fr 1fr; gap:14px; margin-top:10px; }
+  @media (max-width:760px){ .grid { grid-template-columns:1fr; } input#tab{width:220px;} }
+  .code { font-family:Consolas,Monaco,monospace; font-size:13.5px; background:#f6f6f6; border:1px solid #ddd; border-radius:7px; padding:8px 0; }
+  .code div { padding:1px 12px; white-space:pre; border-left:4px solid transparent; }
+  .code .test { background:var(--bluebg); border-left-color:var(--blue); }
+  .code .instr { background:var(--greenbg); border-left-color:var(--green); }
+  .code .exit { background:var(--yelbg); border-left-color:var(--yel); }
+  .code .error { background:var(--redbg); border-left-color:var(--red); }
+  .panel { border:1px solid #d8cfe8; border-radius:7px; padding:8px 12px; background:#fcfbfe; margin-bottom:10px; }
+  .panel h3 { margin:0 0 6px; font-size:14px; color:var(--c1); }
+  table.vars { border-collapse:collapse; font-family:Consolas,Monaco,monospace; font-size:14px; }
+  table.vars td { border:1px solid #d8cfe8; padding:3px 10px; }
+  table.vars td.changed { background:var(--greenbg); font-weight:bold; }
+  .counter { font-size:28px; font-weight:bold; color:var(--c1); }
+  .msg { font-size:14px; min-height:42px; }
+  .msg.error { color:var(--red); font-weight:bold; }
+  .legend { font-size:12.5px; color:#444; margin:4px 0; }
+  .legend span.sw { display:inline-block; width:14px; height:12px; border:2px solid; border-radius:3px; vertical-align:middle; margin:0 3px 0 10px; }
+  table.cmp { border-collapse:collapse; width:100%; font-size:14px; margin-top:8px; }
+  table.cmp th { background:var(--c1); color:#fff; padding:6px 8px; }
+  table.cmp td { border:1px solid #cfc6df; padding:6px 8px; text-align:center; }
+  .hint { font-size:12.5px; color:#555; }
+  .code .pending { background:#f3eefa; border-left-color:var(--c1); outline:2px dashed var(--c1); }
+  #qinput input { width:80px; } #qinput button { margin-right:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔎 Simulateur — Rechercher dans un tableau
+  <small>RES1-03 · CM7 · Séquentielle, séquentielle dans un tableau trié, dichotomique</small></h1>
+
+<div class="bar">
+  <label>Tableau
+    <select id="preset">
+      <option value="12, 7, 25, 7, 18, 3">Pilulier non trié (6 cases)</option>
+      <option value="3, 7, 12, 18, 25, 31">Trié (6 cases)</option>
+      <option value="4, 9, 13, 17, 22, 28, 31, 36, 40, 45, 51, 57, 62, 70, 78" selected>Trié (15 cases)</option>
+      <option value="12, 25, 31, 42, 58, 63, 77, 87, 95, 104, 129, 156, 214, 301, 356">Dossards triés (série « Le marathon »)</option>
+      <option value="perso">Mon tableau…</option>
+    </select>
+  </label>
+  <label>Valeurs (séparées par des virgules)<input id="tab" value="4, 9, 13, 17, 22, 28, 31, 36, 40, 45, 51, 57, 62, 70, 78"></label>
+  <label>x cherché<input id="x" type="number" value="62"></label>
+  <label>Recherche
+    <select id="algo">
+      <option value="seq">Séquentielle — Position</option>
+      <option value="tri">Séquentielle dans un tableau trié — PositionTrie</option>
+      <option value="dicho" selected>Dichotomique — Dichotomie</option>
+      <option value="piege">⚠️ Piège VBA : Do While i &lt;= nb And T(i) &lt;&gt; x</option>
+    </select>
+  </label>
+</div>
+
+<div class="btns">
+  <button class="main" id="step">▶ Pas suivant</button>
+  <button id="run">⏩ Jusqu'à la fin</button>
+  <button id="reset">↺ Recommencer</button>
+  <button id="cmp">📊 Comparer les trois recherches</button>
+  <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--c1);font-weight:bold;margin-left:6px;"><input type="checkbox" id="predict"> 🧠 Mode prédiction</label>
+</div>
+<div class="warn" id="warn"></div>
+
+<div class="legend">
+  <span class="sw" style="background:var(--bluebg);border-color:var(--blue)"></span>case comparée
+  <span class="sw" style="background:#eee;border-color:#bbb"></span>déjà vue
+  <span class="sw" style="background:var(--greenbg);border-color:var(--green)"></span>trouvée
+  <span class="sw" style="background:var(--redbg);border-color:var(--red)"></span>dépassé x
+  <span class="sw" style="background:var(--yelbg);border-color:var(--yel)"></span>milieu
+  <span class="sw" style="background:#e9e9e9;border-color:#d0d0d0;opacity:.5"></span>zone écartée
+  &nbsp;|&nbsp; Code :
+  <span class="sw" style="background:var(--bluebg);border-color:var(--blue)"></span>test
+  <span class="sw" style="background:var(--greenbg);border-color:var(--green)"></span>instruction exécutée
+  <span class="sw" style="background:var(--yelbg);border-color:var(--yel)"></span>sortie de boucle
+</div>
+<div class="cells" id="cells"></div>
+
+<div class="grid">
+  <div><div class="code" id="code"></div></div>
+  <div>
+    <div class="panel"><h3>Comparaisons avec x</h3><span class="counter" id="count">0</span>
+      <span class="hint">&nbsp; (une par case examinée) · tour de boucle : <b id="tours">0</b></span></div>
+    <div class="panel"><h3>Variables</h3><table class="vars" id="vars"></table></div>
+    <div class="panel" id="qbox" style="display:none;border:2px solid var(--c1);background:#fff;"><h3>🧠 Ta prédiction</h3><div id="qtext" style="font-size:14px;margin-bottom:6px;"></div><div id="qinput"></div><div id="qfb" style="font-size:13.5px;margin-top:6px;min-height:18px;"></div><div class="hint" style="margin-top:4px;">Prédictions justes : <b id="qok">0</b> · erreurs : <b id="qko">0</b></div></div>
+    <div class="panel"><h3>Ce qui se passe</h3><div class="msg" id="msg">Cliquez sur « Pas suivant ».</div></div>
+  </div>
+</div>
+<div class="panel" id="cmpbox" style="display:none;margin-top:12px;"><h3>Les trois recherches sur le même x</h3><div id="cmpres"></div></div>
+</div>
+
+<script>
+const CODES = {
+  seq: ["pos ← 0", "i ← 1", "tant que i ≤ nb ET pos = 0 faire", "    si T[i] = x alors", "        pos ← i", "    fsi",
+        "    i ← i + 1", "ftq", "retourne(pos)"],
+  tri: ["pos ← 0", "fini ← faux", "i ← 1", "tant que i ≤ nb ET NON fini faire", "    si T[i] = x alors", "        pos ← i",
+        "        fini ← vrai", "    sinon", "        si T[i] > x alors", "            fini ← vrai", "        sinon",
+        "            i ← i + 1", "        fsi", "    fsi", "ftq", "retourne(pos)"],
+  dicho: ["pos ← 0", "g ← 1", "d ← nb", "tant que g ≤ d ET pos = 0 faire", "    m ← (g + d) div 2", "    si T[m] = x alors",
+          "        pos ← m", "    sinon", "        si T[m] < x alors", "            g ← m + 1", "        sinon",
+          "            d ← m - 1", "        fsi", "    fsi", "ftq", "retourne(pos)"],
+  piege: ["' Dim T(1 To nb) As Integer", "i = 1", "Do While i <= nb And T(i) <> x", "    i = i + 1", "Loop",
+          "MsgBox(\"trouvé en case \" & i)"]
+};
+
+// Chaque algorithme est un générateur d'événements {line, kind, vars, focus, msg, cmp}
+function* seq(T, x) {
+  const nb = T.length; let pos = 0, i, tours = 0, seen = new Set();
+  const st = (extra) => ({ T, nb, x, pos, i, tours, seen: new Set(seen), ...extra });
+  yield { line:0, kind:"instr", s:st({}), vars:{pos:0}, msg:"pos ← 0 : « pas encore trouvé »." };
+  i = 1; yield { line:1, kind:"instr", s:st({}), vars:{pos, i}, msg:"On commence par la première case." };
+  while (true) {
+    const c = i <= nb && pos === 0;
+    yield { line:2, kind:"test", res:c, s:st({cur: c ? i : null}), vars:{pos, i},
+            msg:`Test : i ≤ nb (${i} ≤ ${nb} : ${i<=nb?"vrai":"faux"}) ET pos = 0 (${pos===0?"vrai":"faux"}) → ${c?"<b>vrai</b> : on entre":"<b>faux</b> : on sort"}.` };
+    if (!c) break;
+    tours++;
+    const eq = T[i-1] === x;
+    yield { line:3, kind:"test", res:eq, cmp:true, s:st({cur:i, found: eq ? i : null}), vars:{pos, i},
+            msg:`T[${i}] = ${T[i-1]} ${eq?"=":"≠"} ${x} → ${eq?"vrai":"faux"}.` };
+    if (eq) { pos = i; yield { line:4, kind:"instr", s:st({found:i}), vars:{pos, i}, msg:`On retient la position : pos ← ${i}.` }; }
+    seen.add(i); i++;
+    yield { line:6, kind:"instr", s:st({found: pos||null}), vars:{pos, i}, msg:`Relance : i ← ${i}.` };
+  }
+  yield { line:7, kind:"exit", s:st({found: pos||null}), vars:{pos, i}, msg:"Sortie de boucle." };
+  yield { line:8, kind:"instr", s:st({found: pos||null}), vars:{pos, i}, done:true,
+          msg: pos ? `Résultat : <b>${pos}</b> (première occurrence).` : "Résultat : <b>0</b> : x est absent." };
+}
+
+function* tri(T, x) {
+  const nb = T.length; let pos = 0, fini = false, i, tours = 0, seen = new Set(), stop = null;
+  const st = (extra) => ({ T, nb, x, pos, i, tours, seen: new Set(seen), stop, ...extra });
+  const V = () => ({pos, fini: fini ? "vrai" : "faux", i});
+  yield { line:0, kind:"instr", s:st({}), vars:{pos}, msg:"pos ← 0." };
+  yield { line:1, kind:"instr", s:st({}), vars:{pos, fini:"faux"}, msg:"Drapeau baissé : fini ← faux." };
+  i = 1; yield { line:2, kind:"instr", s:st({}), vars:V(), msg:"Première case." };
+  while (true) {
+    const c = i <= nb && !fini;
+    yield { line:3, kind:"test", res:c, s:st({cur: c ? i : null, found: pos||null}), vars:V(),
+            msg:`Test : i ≤ nb (${i<=nb?"vrai":"faux"}) ET NON fini (${!fini?"vrai":"faux"}) → ${c?"<b>vrai</b>":"<b>faux</b> : on sort"}.` };
+    if (!c) break;
+    tours++;
+    const v = T[i-1];
+    yield { line:4, kind:"test", res:v===x, cmp:true, s:st({cur:i}), vars:V(), msg:`T[${i}] = ${v} : est-ce ${x} ? ${v===x?"oui":"non"}.` };
+    if (v === x) {
+      pos = i; yield { line:5, kind:"instr", s:st({found:i}), vars:V(), msg:`Trouvé : pos ← ${i}.` };
+      fini = true; yield { line:6, kind:"instr", s:st({found:i}), vars:V(), msg:"On lève le drapeau : fini ← vrai." };
+    } else {
+      yield { line:8, kind:"test", res:v>x, s:st({cur:i}), vars:V(), msg:`T[${i}] = ${v} > ${x} ? ${v>x?"<b>oui</b> : on a dépassé x":"non : x est peut-être plus loin"}.` };
+      if (v > x) { stop = i; fini = true; yield { line:9, kind:"instr", s:st({}), vars:V(), msg:"Le tableau est trié : x ne peut pas être plus loin. fini ← vrai." }; }
+      else { seen.add(i); i++; yield { line:11, kind:"instr", s:st({}), vars:V(), msg:`Case suivante : i ← ${i}.` }; }
+    }
+  }
+  yield { line:14, kind:"exit", s:st({found:pos||null}), vars:V(), msg:"Sortie de boucle." };
+  yield { line:15, kind:"instr", s:st({found:pos||null}), vars:V(), done:true, msg: pos ? `Résultat : <b>${pos}</b>.` : "Résultat : <b>0</b> : x est absent." };
+}
+
+function* dicho(T, x) {
+  const nb = T.length; let pos = 0, g, d, m = null, tours = 0;
+  const st = (extra) => ({ T, nb, x, pos, zone:[g, d], tours, ...extra });
+  const V = () => ({pos, g, d, m: m===null ? "—" : m});
+  yield { line:0, kind:"instr", s:st({}), vars:{pos}, msg:"pos ← 0." };
+  g = 1; yield { line:1, kind:"instr", s:st({}), vars:{pos, g}, msg:"Bord gauche de la zone : g ← 1." };
+  d = nb; yield { line:2, kind:"instr", s:st({}), vars:V(), msg:`Bord droit : d ← ${nb}. La zone est tout le tableau.` };
+  while (true) {
+    const c = g <= d && pos === 0;
+    yield { line:3, kind:"test", res:c, s:st({found: pos||null}), vars:V(),
+            msg:`Test : g ≤ d (${g} ≤ ${d} : ${g<=d?"vrai":"faux, zone vide"}) ET pos = 0 (${pos===0?"vrai":"faux"}) → ${c?"<b>vrai</b>":"<b>faux</b> : on sort"}.` };
+    if (!c) break;
+    tours++;
+    m = Math.floor((g + d) / 2);
+    yield { line:4, kind:"instr", s:st({mid:m}), vars:V(), msg:`m ← (${g} + ${d}) div 2 = ${m}.` };
+    const v = T[m-1];
+    yield { line:5, kind:"test", res:v===x, cmp:true, s:st({mid:m, found: v===x ? m : null}), vars:V(), msg:`T[${m}] = ${v} : est-ce ${x} ? ${v===x?"oui":"non"}.` };
+    if (v === x) { pos = m; yield { line:6, kind:"instr", s:st({found:m}), vars:V(), msg:`Trouvé : pos ← ${m}.` }; }
+    else {
+      yield { line:8, kind:"test", res:v<x, s:st({mid:m}), vars:V(), msg:`T[${m}] = ${v} < ${x} ? ${v<x?"oui : x est à droite":"non : x est à gauche"}.` };
+      if (v < x) { g = m + 1; yield { line:9, kind:"instr", s:st({}), vars:V(), msg:`On écarte la moitié gauche : g ← ${g}.` }; }
+      else { d = m - 1; yield { line:11, kind:"instr", s:st({}), vars:V(), msg:`On écarte la moitié droite : d ← ${d}.` }; }
+    }
+  }
+  yield { line:14, kind:"exit", s:st({found:pos||null}), vars:V(), msg: pos ? "Sortie : trouvé." : `Sortie : g = ${g} > d = ${d}, la zone est vide.` };
+  yield { line:15, kind:"instr", s:st({found:pos||null}), vars:V(), done:true, msg: pos ? `Résultat : <b>${pos}</b>.` : "Résultat : <b>0</b> : x est absent." };
+}
+
+function* piege(T, x) {
+  const nb = T.length; let i, tours = 0, seen = new Set();
+  const st = (extra) => ({ T, nb, x, i, tours, seen: new Set(seen), ...extra });
+  yield { line:0, kind:"instr", s:st({}), vars:{nb}, msg:`Le tableau a exactement ${nb} cases : T(1) à T(${nb}).` };
+  i = 1; yield { line:1, kind:"instr", s:st({}), vars:{i}, msg:"i = 1." };
+  while (true) {
+    if (i > nb) {
+      yield { line:2, kind:"error", s:st({ghost:true}), vars:{i}, error:true, done:true,
+              msg:`i ≤ nb est FAUX (${i} > ${nb})… mais <b>And</b> évalue quand même T(${i}), qui n'existe pas.<br>❌ <b>Erreur d'exécution 9 : l'indice n'appartient pas à la sélection.</b> Solution : un drapeau (ou pos), ou un If … Then Exit Do.` };
+      return;
+    }
+    const v = T[i-1], c = v !== x;
+    yield { line:2, kind:"test", res:c, cmp:true, s:st({cur:i, found: c ? null : i}), vars:{i},
+            msg:`i ≤ nb (vrai) And T(${i}) <> x (${v} <> ${x} : ${c?"vrai":"faux"}) → ${c?"on continue":"on sort"}.` };
+    if (!c) break;
+    tours++; seen.add(i); i++;
+    yield { line:3, kind:"instr", s:st({}), vars:{i}, msg:`i = ${i}.` };
+  }
+  yield { line:4, kind:"exit", s:st({found:i}), vars:{i}, msg:"Sortie de boucle : x est présent, tout va bien… cette fois." };
+  yield { line:5, kind:"instr", s:st({found:i}), vars:{i}, done:true, msg:`Trouvé en case ${i}. Essayez maintenant avec un x <b>absent</b>.` };
+}
+
+const ALGOS = { seq, tri, dicho, piege };
+let gen, count, last, prevVars, finished;
+const $ = (id) => document.getElementById(id);
+
+function readTab() {
+  return $("tab").value.split(/[;, ]+/).filter(s => s.trim() !== "").map(Number).filter(n => !isNaN(n)).slice(0, 20);
+}
+function isSorted(T) { for (let k = 1; k < T.length; k++) if (T[k] < T[k-1]) return false; return true; }
+
+function drawCells(s) {
+  const T = s ? s.T : readTab(); const box = $("cells"); box.innerHTML = "";
+  T.forEach((v, k) => {
+    const j = k + 1; let cls = "", mk = "";
+    if (s) {
+      if (s.zone) { const [g, d] = s.zone; if (g !== undefined && d !== undefined && (j < g || j > d)) cls = "out";
+                    if (j === g) mk += "g "; if (j === d) mk += "d"; }
+      if (s.seen && s.seen.has(j)) cls = "seen";
+      if (s.stop === j) cls = "stop";
+      if (s.cur === j) { cls = "cur"; mk = "▲ i"; }
+      if (s.mid === j) { cls = "mid"; mk = (mk.includes("g") ? "g " : "") + "m" + (mk.includes("d") ? " d" : ""); }
+      if (s.found === j) cls = "found";
+      if (!s.zone && s.i === j && !s.cur && s.found !== j) mk = "i";
+    }
+    box.insertAdjacentHTML("beforeend", `<div class="cell"><div class="ix">${j}</div><div class="v ${cls}">${v}</div><div class="mk">${mk.trim()}</div></div>`);
+  });
+  if (s && s.ghost) box.insertAdjacentHTML("beforeend", `<div class="cell"><div class="ix">${T.length+1}</div><div class="v ghost">?</div><div class="mk" style="color:var(--red)">▲ i</div></div>`);
+}
+function drawCode(algo, ev) {
+  $("code").innerHTML = CODES[algo].map((l, k) => `<div class="${ev && ev.line === k ? ev.kind : ""}">${l.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</div>`).join("");
+}
+function drawVars(v) {
+  const keys = Object.keys(v || {});
+  $("vars").innerHTML = keys.length ? "<tr>" + keys.map(k => `<td>${k}</td>`).join("") + "</tr><tr>" +
+    keys.map(k => `<td class="${prevVars && prevVars[k] !== v[k] ? "changed" : ""}">${v[k]}</td>`).join("") + "</tr>" : "<tr><td>—</td></tr>";
+  prevVars = { ...v };
+}
+
+function reset() {
+  const algo = $("algo").value, T = readTab(), x = Number($("x").value);
+  gen = ALGOS[algo](T, x); count = 0; last = null; prevVars = null; finished = false; pending = null; qok = 0; qko = 0;
+  $("qok").textContent = "0"; $("qko").textContent = "0"; $("qbox").style.display = $("predict").checked ? "block" : "none";
+  $("qtext").innerHTML = $("predict").checked ? "Clique sur « Pas suivant » : à chaque test et à chaque changement de variable dans la boucle, tu prédis avant de voir." : "";
+  $("qinput").innerHTML = ""; $("qfb").innerHTML = "";
+  $("count").textContent = "0"; $("tours").textContent = "0";
+  $("msg").className = "msg"; $("msg").innerHTML = "Cliquez sur « Pas suivant ».";
+  drawCells(null); drawCode(algo, null); drawVars({});
+  $("step").disabled = false; $("run").disabled = $("predict").checked;
+  const w = $("warn");
+  if ((algo === "tri" || algo === "dicho") && !isSorted(T)) {
+    w.style.display = "block";
+    w.innerHTML = "⚠️ Ce tableau n'est <b>pas trié</b> : cette recherche suppose un tableau trié et peut répondre « absent » à tort. Essayez quand même pour le constater !";
+  } else w.style.display = "none";
+}
+let pending = null, qok = 0, qko = 0, tries = 0;
+const HINTS = { m:"m ← (g + d) div 2 : division entière de la somme.", g:"Si T[m] < x : g ← m + 1.", d:"Si T[m] > x : d ← m − 1.",
+                i:"Relance : i ← i + 1 (ou i − 1 si on descend).", pos:"pos prend le numéro de la case où l'on a trouvé x.", fini:"fini devient vrai quand on trouve ou qu'on dépasse x." };
+function questionFor(ev) {
+  if (ev.error || ev.done) return null;
+  if (ev.kind === "test" && ev.res !== undefined) return { type:"bool", ans: ev.res, text:"Le test de la ligne encadrée est-il <b>vrai</b> ou <b>faux</b> ?" };
+  if (ev.kind === "instr" && ev.s.tours > 0 && prevVars) {
+    for (const k of Object.keys(ev.vars)) {
+      const v = ev.vars[k];
+      if (typeof v === "number" && prevVars[k] !== v) return { type:"num", key:k, ans:v, text:`Après la ligne encadrée, que vaut <b>${k}</b> ?` };
+    }
+  }
+  return null;
+}
+function ask(q, ev) {
+  drawCode($("algo").value, { line: ev.line, kind: "pending" });
+  $("qbox").style.display = "block"; $("qtext").innerHTML = q.text; $("qfb").innerHTML = ""; tries = 0;
+  $("qinput").innerHTML = q.type === "bool" ? '<button id="qv">Vrai</button><button id="qf">Faux</button>'
+    : '<input id="qn" type="number"> <button id="qgo">Valider</button>';
+  const check = (val) => {
+    if (val === q.ans) { qok++; $("qok").textContent = qok; $("qfb").innerHTML = "✅ Oui."; pending = null; $("qinput").innerHTML = ""; show(ev);
+      if (!finished) setTimeout(step, 450); return; }
+    qko++; tries++; $("qko").textContent = qko;
+    if (tries >= 2) { $("qfb").innerHTML = `❌ La réponse était <b>${q.type === "bool" ? (q.ans ? "vrai" : "faux") : q.ans}</b>. Regarde l'explication ci-dessous.`;
+      pending = null; $("qinput").innerHTML = ""; show(ev); return; }
+    $("qfb").innerHTML = "❌ Non. " + (q.type === "num" ? (HINTS[q.key] || "Relis la ligne encadrée.") : "Calcule chaque partie de la condition avec les valeurs actuelles.") + " Réessaie.";
+  };
+  if (q.type === "bool") { $("qv").onclick = () => check(true); $("qf").onclick = () => check(false); }
+  else { const go = () => { const t = $("qn").value.trim(); if (t !== "") check(Number(t)); };
+         $("qgo").onclick = go; $("qn").onkeydown = (e) => { if (e.key === "Enter") go(); }; $("qn").focus(); }
+}
+function show(ev) {
+  if (ev.cmp) count++;
+  $("count").textContent = count; $("tours").textContent = ev.s.tours;
+  drawCells(ev.s); drawCode($("algo").value, ev); drawVars(ev.vars);
+  $("msg").className = "msg" + (ev.error ? " error" : ""); $("msg").innerHTML = ev.msg;
+  if (ev.done) { finished = true; $("step").disabled = $("run").disabled = true;
+    if ($("predict").checked) $("qfb").innerHTML = `🏁 Trace terminée : <b>${qok}</b> prédiction(s) juste(s), <b>${qko}</b> erreur(s).`; }
+}
+function step() {
+  if (finished || pending) return;
+  const r = gen.next();
+  if (r.done) { finished = true; $("step").disabled = $("run").disabled = true; return; }
+  const ev = r.value; last = ev;
+  if ($("predict").checked) { const q = questionFor(ev); if (q) { pending = ev; ask(q, ev); return; } }
+  show(ev);
+}
+function runAll() { if ($("predict").checked) return; let k = 0; while (!finished && k++ < 2000) step(); }
+
+function compare() {
+  const T = readTab(), x = Number($("x").value), sorted = [...T].sort((a, b) => a - b), wasSorted = isSorted(T);
+  const res = [["seq", "Séquentielle", T], ["tri", "Séquentielle (trié)", sorted], ["dicho", "Dichotomique", sorted]].map(([a, name, tab]) => {
+    let c = 0, out = 0; for (const ev of ALGOS[a](tab, x)) { if (ev.cmp) c++; if (ev.done) out = ev.vars.pos; }
+    return `<tr><td>${name}</td><td>${tab.join(", ")}</td><td>${out}</td><td><b>${c}</b></td></tr>`;
+  }).join("");
+  $("cmpres").innerHTML = `<table class="cmp"><tr><th>Recherche</th><th>Tableau utilisé</th><th>Résultat</th><th>Comparaisons</th></tr>${res}</table>` +
+    (wasSorted ? "" : `<p class="hint">Votre tableau n'étant pas trié, les deux dernières recherches ont été lancées sur sa version triée (les positions ne sont donc pas les mêmes).</p>`) +
+    `<p class="hint">Essayez un x <b>absent</b>, puis un x placé à la fin : c'est là que l'écart se creuse.</p>`;
+  $("cmpbox").style.display = "block";
+}
+
+$("preset").addEventListener("change", () => { const v = $("preset").value; if (v !== "perso") $("tab").value = v; else $("tab").focus(); reset(); });
+["tab", "x", "algo", "predict"].forEach(id => $(id).addEventListener("change", reset));
+// paramètres d'URL : ?algo=dicho&x=51&tab=4,9,13&predict=1
+const U = new URLSearchParams(location.search);
+if (U.get("tab")) { $("tab").value = U.get("tab").split(",").join(", "); $("preset").value = [...$("preset").options].some(o => o.value === $("tab").value) ? $("tab").value : "perso"; }
+if (U.get("x")) $("x").value = U.get("x");
+if (U.get("algo") && ALGOS[U.get("algo")]) $("algo").value = U.get("algo");
+if (U.get("predict") === "1") $("predict").checked = true;
+$("tab").addEventListener("input", () => { $("preset").value = "perso"; });
+$("step").onclick = step; $("run").onclick = runAll; $("reset").onclick = reset; $("cmp").onclick = compare;
+reset();
+</script>
+</body>
+</html>
