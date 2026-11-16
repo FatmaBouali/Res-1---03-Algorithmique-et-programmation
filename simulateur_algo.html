@@ -929,64 +929,114 @@ Début
     Afficher(T[k + 4])
 Fin` },
 // ------------------------------------------------------------------ CM6
-{ id: "cm6_videotheque", cm: "CM6 — Enregistrements", titre: "Ma vidéothèque — fiches et classeur", entrees: "Orbite ; 2019 ; 148 ; 4.5 ; Le Phare ; 2022 ; 120 ; 3.5 ; Minuit ; 2023 ; 88 ; 2.5",
-  desc: "La fiche k, puis le compartiment : V[k].duree. SaisirFilm reçoit la fiche en MODIF.",
-  code: `Type Film = enregistrement
-    titre : chaîne
-    annee : entier
-    duree : entier      {en minutes}
+{ id: "cm6_fiche", cm: "CM6 — Enregistrements", titre: "Copier n'est pas lier — deux fiches (exercice B du cours)", entrees: "",
+  desc: "b ← a recopie toute la fiche d'un coup ; ensuite, les deux fiches vivent séparément. Regardez les deux fiches dans la mémoire.",
+  code: `Type Etudiant = enregistrement
+    nom : chaîne
     note : réel
+    age : entier
+    boursier : booléen
 FinEnregistrement
 
-Procédure SaisirFilm (MODIF f : Film)
-{Rôle : remplit les quatre champs d'une fiche | Paramètres : f (MODIF, Film) : la fiche à remplir}
+Algorithme CopieFiches
+Variables a, b : Etudiant
 Début
-    Afficher("Titre ? ")
-    Saisir(f.titre)
-    Afficher("Année ? ")
-    Saisir(f.annee)
-    Afficher("Durée (min) ? ")
-    Saisir(f.duree)
-    Afficher("Note ? ")
-    Saisir(f.note)
-FinProcédure
+    a.nom ← "LEA"
+    a.note ← 12
+    b ← a                  {photocopie de la fiche entière}
+    b.nom ← "LEO"
+    b.note ← b.note + 3
+    a.note ← a.note - 2
+    Afficher(a.nom, " ", a.note, " / ", b.nom, " ", b.note)
+Fin` },
+{ id: "cm6_champion", cm: "CM6 — Enregistrements", titre: "Le champion du classeur (exercice C du cours)", entrees: "",
+  desc: "L'indice choisit la fiche, le point choisit le champ : Promo[k].note. On garde la POSITION du meilleur pour retrouver toute sa fiche. Égalité à 16 : > ou ≥ ?",
+  code: `Type Etudiant = enregistrement
+    nom : chaîne
+    note : réel
+    age : entier
+    boursier : booléen
+FinEnregistrement
 
-Fonction EstLong (FIXE f : Film) : booléen
-{Rôle : vrai si le film dure au moins 120 minutes | Paramètres : f (FIXE, Film) : la fiche lue}
+Algorithme Champion
+Constante CAPA = 4
+Variables Promo[CAPA] : Etudiant
+          nbEtu, k, pos : entiers
 Début
-    retourne(f.duree ≥ 120)
-FinFonction
-
-Fonction MeilleurFilm (FIXE V : tableau de Film, FIXE nb : entier) : entier
-{Rôle : position du film le mieux noté (le premier en cas d'égalité) | Paramètres : V (FIXE) : le classeur ; nb (FIXE) : nombre de fiches}
-Variables k, pos : entiers
-Début
+    nbEtu ← 4
+    Promo[1].nom ← "ALI"
+    Promo[1].note ← 13
+    Promo[2].nom ← "BEA"
+    Promo[2].note ← 16
+    Promo[3].nom ← "CLO"
+    Promo[3].note ← 9
+    Promo[4].nom ← "DAN"
+    Promo[4].note ← 16
     pos ← 1
-    pour k ← 2 à nb faire
-        si V[k].note > V[pos].note alors
+    pour k ← 2 à nbEtu faire
+        si Promo[k].note > Promo[pos].note alors
             pos ← k
         fsi
     fpour
-    retourne(pos)
+    Afficher("Meilleure note : ", Promo[pos].nom)
+Fin` },
+{ id: "cm6_promo", cm: "CM6 — Enregistrements", titre: "GestionPromo — SaisirEtudiant, EstAdmis, NbAdmis (section 5 du cours)", entrees: "4 ; ALI ; 13 ; 19 ; vrai ; BEA ; 16 ; 18 ; faux ; CLO ; 25 ; 9 ; 20 ; vrai ; DAN ; 16 ; 19 ; faux",
+  desc: "SaisirEtudiant(Promo[k]) remplit LA fiche k (MODIF) ; EstAdmis reçoit une photocopie de la fiche (FIXE) et sert directement de condition. La note 25 de CLO est refusée.",
+  code: `Type Etudiant = enregistrement
+    nom : chaîne
+    note : réel
+    age : entier
+    boursier : booléen
+FinEnregistrement
+
+Procédure SaisirEtudiant (MODIF e : Etudiant)
+{Rôle : saisir les 4 champs d'une fiche ; la note est redemandée tant qu'elle n'est pas entre 0 et 20
+ | Paramètres : e (MODIF, Etudiant) : la fiche remplie}
+Début
+    Afficher("Nom ? ")
+    Saisir(e.nom)
+    Afficher("Note ? ")
+    Saisir(e.note)
+    tant que e.note < 0 OU e.note > 20 faire
+        Afficher("Note entre 0 et 20 ! ")
+        Saisir(e.note)
+    ftq
+    Afficher("Âge ? ")
+    Saisir(e.age)
+    Afficher("Boursier (vrai/faux) ? ")
+    Saisir(e.boursier)
+FinProcédure
+
+Fonction EstAdmis (FIXE e : Etudiant) : booléen
+{Rôle : vrai si la note de la fiche est au moins 10 | Paramètres : e (FIXE, Etudiant) : la fiche examinée}
+Début
+    retourne(e.note ≥ 10)
 FinFonction
 
-Algorithme Videotheque
-Constante CAPA = 4
-Variables V[CAPA] : Film
-          nb, k, nbLongs, p : entiers
+Fonction NbAdmis (FIXE Promo : tableau d'Etudiant, FIXE nb : entier) : entier
+{Rôle : compter les fiches admises | Paramètres : Promo (FIXE) : le classeur ; nb (FIXE, entier) : nombre de fiches}
+Variables k, cpt : entiers
 Début
-    nb ← 3
+    cpt ← 0
     pour k ← 1 à nb faire
-        SaisirFilm(V[k])
-    fpour
-    nbLongs ← 0
-    pour k ← 1 à nb faire
-        si EstLong(V[k]) alors
-            nbLongs ← nbLongs + 1
+        si EstAdmis(Promo[k]) alors
+            cpt ← cpt + 1
         fsi
     fpour
-    p ← MeilleurFilm(V, nb)
-    Afficher(nbLongs, " films longs ; meilleur : ", V[p].titre)
+    retourne(cpt)
+FinFonction
+
+Algorithme GestionPromo
+Constante CAPA = 4
+Variables Promo[CAPA] : Etudiant
+          nbEtu, k : entiers
+Début
+    Afficher("Combien d'étudiants ? ")
+    Saisir(nbEtu)
+    pour k ← 1 à nbEtu faire
+        SaisirEtudiant(Promo[k])
+    fpour
+    Afficher(NbAdmis(Promo, nbEtu), " admis sur ", nbEtu)
 Fin` },
 // ------------------------------------------------------------------ CM7
 { id: "cm7_position", cm: "CM7 — Recherche", titre: "Recherche séquentielle — Position", entrees: "",
